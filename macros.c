@@ -505,7 +505,7 @@ STREAM         *expandmacro(
 
 /* dump_all_macros is a diagnostic function that's currently not
    used.  I used it while debugging, and I haven't removed it. */
-
+#ifdef DEBUG
 static void dump_all_macros(
     void)
 {
@@ -518,7 +518,7 @@ static void dump_all_macros(
         printf("\n\n");
     }
 }
-
+#endif
 
 /* Allocate a new macro */
 

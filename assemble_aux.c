@@ -209,11 +209,9 @@ void implicit_gbl(
     switch (value->type) {
     case EX_UNDEFINED_SYM:
         {
-            SYMBOL         *sym;
-
             if (!(value->data.symbol->flags & SYMBOLFLAG_LOCAL)) {      /* Unless it's a
                                                                            local symbol, */
-                sym = add_sym(value->data.symbol->label, 0, SYMBOLFLAG_GLOBAL, &absolute_section, &implicit_st);
+                add_sym(value->data.symbol->label, 0, SYMBOLFLAG_GLOBAL, &absolute_section, &implicit_st);
             }
         }
         break;

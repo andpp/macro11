@@ -697,7 +697,7 @@ static int assemble(
                 case P_IF:
                     {
                         EX_TREE        *value;
-                        int             ok;
+                        int             ok = 0;
 
                         label = get_symbol(cp, &cp, NULL);      /* Get condition */
                         cp = skipdelim(cp);
@@ -771,7 +771,7 @@ static int assemble(
                                 free_tree(value);
                                 ok = FALSE;     /* Pick something. */
                             } else {
-                                unsigned        word;
+                                unsigned        word = 0;
 
                                 /* Convert to signed and unsigned words */
                                 sword = value->data.lit & 0x7fff;
@@ -1433,7 +1433,6 @@ static int assemble(
                             EX_TREE        *value;
                             unsigned        reg;
                             unsigned        word;
-                            int             ok = 1;
 
                             value = parse_expr(cp, 0);
                             cp = value->cp;
@@ -1442,7 +1441,6 @@ static int assemble(
                             if (reg == NO_REG || reg > 4) {
                                 report(stack->top, "Illegal source register\n");
                                 reg = 0;
-                                ok = 0;
                             }
 
                             cp = skipwhite(cp);

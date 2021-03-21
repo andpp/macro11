@@ -1,0 +1,14 @@
+User-agent: *
+Disallow: /pub/pdp11/midi
+Disallow: /pub/pdp11/fuzzball/bos
+Disallow: /pub/pdp11/fuzzball/fuzz1
+Disallow: /pub/pdp11/fuzzball/fuzz2
+Disallow: /pub/pdp11/fuzzball/fuzz3
+Disallow: /pub/pdp11/fuzzball/bos.dsk.gz
+Disallow: /pub/pdp11/fuzzball/fuzz1.dsk.gz
+Disallow: /pub/pdp11/fuzzball/fuzz2.dsk.gz
+Disallow: /pub/pdp11/fuzzball/fuzz3.dsk.gz
+Disallow: /pub/pdp10/tops10/decus/decus-1.gz
+Disallow: /pub/pdp10/tops10/decus/decus-2.gz
+Disallow: /pub/pdp10/tops10/decus/decus-3.gz
+Disallow: /pub/pdp10/tops10/decus/pascal-forth.data.gz

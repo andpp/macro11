@@ -10,7 +10,7 @@
 #include "assemble_globals.h"
 #include "object.h"
 
-
+#ifdef DEBUG
 /* Diagnostic: print an expression tree.  I used this in various
    places to help me diagnose parse problems, by putting in calls to
    print_tree when I didn't understand why something wasn't working.
@@ -114,6 +114,7 @@ static void print_tree(
     if (depth == 0)
         fputc('\n', printfile);
 }
+#endif
 
 /* free_tree frees an expression tree. */
 

@@ -1,4 +1,4 @@
-CFLAGS ?= -O -g
+CFLAGS ?= -O -g -Wall
 
 MACRO11_SRCS = macro11.c \
 	assemble.c assemble_globals.c assemble_aux.c	\

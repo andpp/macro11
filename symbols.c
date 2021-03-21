@@ -460,7 +460,7 @@ void add_symbols(
 /* sym_hist is a diagnostic function that prints a histogram of the
    hash table useage of a symbol table.  I used this to try to tune
    the hash function for better spread.  It's not used now. */
-
+#ifdef DEBUG
 static void sym_hist(
     SYMBOL_TABLE *st,
     char *name)
@@ -476,3 +476,4 @@ static void sym_hist(
         fputc('\n', lstfile);
     }
 }
+#endif
