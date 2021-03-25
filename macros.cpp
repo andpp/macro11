@@ -49,8 +49,8 @@ STREAM         *new_macro_stream(
     MACRO *mac,
     ARG *args)
 {
-    MACRO_STREAM   *mstr = memcheck(malloc(sizeof(MACRO_STREAM))); {
-        char           *name = memcheck(malloc(strlen(refstr->name) + 32));
+    MACRO_STREAM   *mstr = (MACRO_STREAM *)memcheck(malloc(sizeof(MACRO_STREAM))); {
+        char           *name = (char *)memcheck(malloc(strlen(refstr->name) + 32));
 
         sprintf(name, "%s:%d->%s", refstr->name, refstr->line, mac->sym.label);
         buffer_stream_construct(&mstr->bstr, buf, name);
@@ -262,10 +262,9 @@ MACRO          *defmacro(
 
 /* Allocate a new ARG */
 
-ARG            *new_arg(
-    void)
+ARG  *new_arg(void)
 {
-    ARG            *arg = memcheck(malloc(sizeof(ARG)));
+    ARG            *arg = (ARG *)memcheck(malloc(sizeof(ARG)));
 
     arg->locsym = 0;
     arg->value = NULL;
@@ -277,8 +276,7 @@ ARG            *new_arg(
 
 /* Free a list of args (as for a macro, or a macro expansion) */
 
-static void free_args(
-    ARG *arg)
+static void free_args(ARG *arg)
 {
     ARG            *next;
 
@@ -386,12 +384,12 @@ void eval_arg(
         } else
             word = value->data.lit;
 
-        free_tree(value);
+        delete (value);
 
         /* printf can't do base 2. */
         my_ultoa(word & 0177777, temp, radix);
         free(arg->value);
-        arg->value = memcheck(strdup(temp));
+        arg->value = (char *)memcheck(strdup(temp));
     }
 }
 
@@ -447,7 +445,7 @@ STREAM         *expandmacro(
                 break;                 /* Don't pick up any more arguments. */
 
             arg = new_arg();
-            arg->label = memcheck(strdup(macarg->label));       /* Copy the name */
+            arg->label = (char *)memcheck(strdup(macarg->label));       /* Copy the name */
             arg->value = getstring(cp, &nextcp);
         }
 
@@ -472,17 +470,17 @@ STREAM         *expandmacro(
             arg = find_arg(args, macarg->label);
             if (arg == NULL) {
                 arg = new_arg();
-                arg->label = memcheck(strdup(macarg->label));
+                arg->label = (char *)memcheck(strdup(macarg->label));
                 if (macarg->locsym) {
                     char            temp[32];
 
                     /* Here's where we generate local labels */
                     sprintf(temp, "%d$", locsym++);
-                    arg->value = memcheck(strdup(temp));
+                    arg->value = (char *)memcheck(strdup(temp));
                 } else if (macarg->value) {
-                    arg->value = memcheck(strdup(macarg->value));
+                    arg->value = (char *)memcheck(strdup(macarg->value));
                 } else
-                    arg->value = memcheck(strdup(""));
+                    arg->value = (char *)memcheck(strdup(""));
 
                 arg->next = args;
                 args = arg;
@@ -525,7 +523,7 @@ static void dump_all_macros(
 MACRO          *new_macro(
     char *label)
 {
-    MACRO          *mac = memcheck(malloc(sizeof(MACRO)));
+    MACRO          *mac = (MACRO *)memcheck(malloc(sizeof(MACRO)));
 
     mac->sym.flags = 0;
     mac->sym.label = label;

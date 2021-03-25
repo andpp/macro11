@@ -9,7 +9,7 @@
 
 
 /* Program sections: */
-typedef struct section {
+struct SECTION {
     char           *label;      /* Section name */
     unsigned        type;       /* Section type */
 #define SECTION_USER 1          /* user-defined */
@@ -23,11 +23,11 @@ typedef struct section {
     unsigned        pc;         /* Current offset in the section */
     unsigned        size;       /* Current section size */
     unsigned        sector;     /* Used for complex relocation, and naught else */
-} SECTION;
+} ;
 
 /* Symbol table entries */
 
-typedef struct symbol {
+struct SYMBOL {
     char           *label;      /* Symbol name */
     unsigned        value;      /* Symbol value */
     int             stmtno;     /* Statement number of symbol's definition */
@@ -40,8 +40,8 @@ typedef struct symbol {
 #define SYMBOLFLAG_LOCAL 32     /* Set if this is a local label (i.e. 10$) */
 
     SECTION        *section;    /* Section in which this symbol is defined */
-    struct symbol  *next;       /* Next symbol with the same hash value */
-} SYMBOL;
+    SYMBOL  *next;       /* Next symbol with the same hash value */
+};
 
 
 
@@ -305,57 +305,27 @@ typedef struct symbol_iter {
 
 extern int      symbol_len;     /* max. len of symbols. default = 6 */
 extern int      symbol_allow_underscores;       /* allow "_" in symbol names */
-
 extern SYMBOL  *reg_sym[8];     /* Keep the register symbols in a handy array */
-
 extern SYMBOL_TABLE system_st;  /* System symbols (Instructions,
                                    pseudo-ops, registers) */
-
 extern SYMBOL_TABLE section_st; /* Program sections */
-
 extern SYMBOL_TABLE symbol_st;  /* User symbols */
-
 extern SYMBOL_TABLE macro_st;   /* Macros */
-
 extern SYMBOL_TABLE implicit_st;        /* The symbols which may be implicit globals */
 
 #endif
 
-int             hash_name(
-    char *label);
+int             hash_name(char *label);
 
-SYMBOL         *add_sym(
-    char *label,
-    unsigned value,
-    unsigned flags,
-    SECTION *section,
-    SYMBOL_TABLE *table);
-SYMBOL         *first_sym(
-    SYMBOL_TABLE *table,
-    SYMBOL_ITER *iter);
+SYMBOL         *add_sym(const char *label, unsigned value, unsigned flags, SECTION *section, SYMBOL_TABLE *table);
+SYMBOL         *first_sym(SYMBOL_TABLE *table, SYMBOL_ITER *iter);
 
-SYMBOL         *lookup_sym(
-    char *label,
-    SYMBOL_TABLE *table);
-SYMBOL         *next_sym(
-    SYMBOL_TABLE *table,
-    SYMBOL_ITER *iter);
-void            free_sym(
-    SYMBOL *sym);
-
-void            remove_sym(
-    SYMBOL *sym,
-    SYMBOL_TABLE *table);
-
-char           *symflags(
-    SYMBOL *sym);
-
-void            add_table(
-    SYMBOL *sym,
-    SYMBOL_TABLE *table);
-
-
-void            add_symbols(
-    SECTION *current_section);
+SYMBOL         *lookup_sym(char *label, SYMBOL_TABLE *table);
+SYMBOL         *next_sym(SYMBOL_TABLE *table, SYMBOL_ITER *iter);
+void            free_sym(SYMBOL *sym);
+void            remove_sym(SYMBOL *sym, SYMBOL_TABLE *table);
+char           *symflags(SYMBOL *sym);
+void            add_table(SYMBOL *sym, SYMBOL_TABLE *table);
+void            add_symbols(SECTION *current_section);
 
 #endif

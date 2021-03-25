@@ -73,9 +73,9 @@ char           *symflags(
 static SYMBOL  *new_sym(
     char *label)
 {
-    SYMBOL         *sym = memcheck(malloc(sizeof(SYMBOL)));
+    SYMBOL         *sym = (SYMBOL *)memcheck(malloc(sizeof(SYMBOL)));
 
-    sym->label = memcheck(strdup(label));
+    sym->label = (char *)memcheck(strdup(label));
     sym->section = NULL;
     sym->value = 0;
     sym->flags = 0;
@@ -178,12 +178,7 @@ void add_table(
 /* add_sym - used throughout to add or update symbols in a symbol
    table.  */
 
-SYMBOL         *add_sym(
-    char *labelraw,
-    unsigned value,
-    unsigned flags,
-    SECTION *section,
-    SYMBOL_TABLE *table)
+SYMBOL         *add_sym(const char *labelraw, unsigned value, unsigned flags, SECTION *section, SYMBOL_TABLE *table)
 {
     SYMBOL         *sym;
     char            label[SYMMAX_MAX + 1];      // big size
@@ -230,8 +225,7 @@ SYMBOL         *add_sym(
 
 /* add_symbols adds all the internal symbols. */
 
-void add_symbols(
-    SECTION *current_section)
+void add_symbols(SECTION *current_section)
 {
     current_pc = add_sym(".", 0, 0, current_section, &symbol_st);
 

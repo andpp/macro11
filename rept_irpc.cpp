@@ -80,7 +80,7 @@ STREAM         *expand_rept(
     value = parse_expr(cp, 0);
     if (value->type != EX_LIT) {
         report(stack->top, ".REPT value must be constant\n");
-        free_tree(value);
+        delete (value);
         return NULL;
     }
 
@@ -96,8 +96,8 @@ STREAM         *expand_rept(
 
     list_level += levelmod;
 
-    rstr = memcheck(malloc(sizeof(REPT_STREAM))); {
-        char           *name = memcheck(malloc(strlen(stack->top->name) + 32));
+    rstr = (REPT_STREAM *)memcheck(malloc(sizeof(REPT_STREAM))); {
+        char           *name = (char *)memcheck(malloc(strlen(stack->top->name) + 32));
 
         sprintf(name, "%s:%d->.REPT", stack->top->name, stack->top->line);
         buffer_stream_construct(&rstr->bstr, gb, name);
@@ -109,7 +109,7 @@ STREAM         *expand_rept(
     rstr->savecond = last_cond;
 
     buffer_free(gb);
-    free_tree(value);
+    delete (value);
 
     return &rstr->bstr.stream;
 }
@@ -224,8 +224,8 @@ STREAM         *expand_irp(
 
     list_level += levelmod;
 
-    str = memcheck(malloc(sizeof(IRP_STREAM))); {
-        char           *name = memcheck(malloc(strlen(stack->top->name) + 32));
+    str = (IRP_STREAM *)memcheck(malloc(sizeof(IRP_STREAM))); {
+        char           *name = (char *)memcheck(malloc(strlen(stack->top->name) + 32));
 
         sprintf(name, "%s:%d->.IRP", stack->top->name, stack->top->line);
         buffer_stream_construct(&str->bstr, NULL, name);
@@ -280,7 +280,7 @@ char           *irpc_stream_gets(
         arg->next = NULL;
         arg->locsym = 0;
         arg->label = istr->label;
-        arg->value = memcheck(malloc(2));
+        arg->value = (char *)memcheck(malloc(2));
         arg->value[0] = *cp++;
         arg->value[1] = 0;
         istr->offset = (int) (cp - istr->items);
@@ -352,8 +352,8 @@ STREAM         *expand_irpc(
 
     list_level += levelmod;
 
-    str = memcheck(malloc(sizeof(IRPC_STREAM))); {
-        char           *name = memcheck(malloc(strlen(stack->top->name) + 32));
+    str = (IRPC_STREAM *)memcheck(malloc(sizeof(IRPC_STREAM))); {
+        char           *name = (char *)memcheck(malloc(strlen(stack->top->name) + 32));
 
         sprintf(name, "%s:%d->.IRPC", stack->top->name, stack->top->line);
         buffer_stream_construct(&str->bstr, NULL, name);

@@ -38,28 +38,11 @@ extern FILE    *lstfile;
 #endif
 
 
-void            list_word(
-    STREAM *str,
-    unsigned addr,
-    unsigned value,
-    int size,
-    char *flags);
-
-void            list_value(
-    STREAM *str,
-    unsigned word);
-
-void            list_source(
-    STREAM *str,
-    char *cp);
-
-void            list_flush(
-    void);
-
-void            report(
-    STREAM *str,
-    char *fmt,
-    ...);
+void            list_word(STREAM *str, unsigned addr, unsigned value, int size, const char *flags);
+void            list_value(STREAM *str, unsigned word);
+void            list_source(STREAM *str, const char *cp);
+void            list_flush(void);
+void            report(STREAM *str, const char *fmt, ...);
 
 
 #endif

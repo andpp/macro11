@@ -65,8 +65,8 @@ static int compare_position(
     const void *arg1,
     const void *arg2)
 {
-    const char     *c1 = arg1,
-            *c2 = arg2;
+    const char  *c1 = (const char *)arg1;
+    const char  *c2 = (const char *)arg2;
 
     if (BYTEPOS(c1) < BYTEPOS(c2))
         return -1;
@@ -92,7 +92,7 @@ static void trim(
 MLB            *mlb_open(
     char *name)
 {
-    MLB            *mlb = memcheck(malloc(sizeof(MLB)));
+    MLB            *mlb = (MLB *)memcheck(malloc(sizeof(MLB)));
     char           *buff;
     unsigned        entsize;
     unsigned        nr_entries;
@@ -107,7 +107,7 @@ MLB            *mlb_open(
         return NULL;
     }
 
-    buff = memcheck(malloc(044));      /* Size of MLB library header */
+    buff = (char *)memcheck(malloc(044));      /* Size of MLB library header */
 
     if (fread(buff, 1, 044, mlb->fp) < 044) {
         mlb_close(mlb);
@@ -129,7 +129,7 @@ MLB            *mlb_open(
     free(buff);                        /* Done with that header. */
 
     /* Allocate a buffer for the disk directory */
-    buff = memcheck(malloc(nr_entries * entsize));
+    buff = (char *)memcheck(malloc(nr_entries * entsize));
     fseek(mlb->fp, start_block * 512, SEEK_SET);        /* Go to the directory */
 
     /* Read the disk directory */
@@ -172,7 +172,7 @@ MLB            *mlb_open(
         qsort(buff, i, entsize, compare_position);
 
         /* Now, allocate my in-memory directory */
-        mlb->directory = memcheck(malloc(sizeof(MLBENT) * mlb->nentries));
+        mlb->directory = (MLBENT *)memcheck(malloc(sizeof(MLBENT) * mlb->nentries));
         memset(mlb->directory, 0, sizeof(MLBENT) * mlb->nentries);
 
         /* Build in-memory directory */
@@ -188,7 +188,7 @@ MLB            *mlb_open(
 
             trim(radname);
 
-            mlb->directory[j].label = memcheck(strdup(radname));
+            mlb->directory[j].label = (char *)memcheck(strdup(radname));
             mlb->directory[j].position = BYTEPOS(ent);
             if (j < i - 1) {
                 mlb->directory[j].length = BYTEPOS(ent + entsize) - BYTEPOS(ent);

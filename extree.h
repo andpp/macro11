@@ -4,7 +4,6 @@
 
 #include "symbols.h"
 
-typedef struct ex_tree {
     enum ex_type { EX_LIT = 1,
         /* Expression is a literal value */
         EX_SYM = 2,
@@ -32,35 +31,43 @@ typedef struct ex_tree {
         EX_AND = 12,
         /* bitwise and */
         EX_OR = 13                     /* bitwise or */
-    } type;
+    };
+
+class EX_TREE;
+
+// EX_TREE        *new_ex_tree()(void);
+// EX_TREE        *new_ex_lit(unsigned value);
+EX_TREE        *ex_err(EX_TREE *tp, char *cp);
+// EX_TREE        *evaluate(EX_TREE *tp, int undef);
+
+
+class EX_TREE {
+  public:
+    EX_TREE() {};
+    EX_TREE(unsigned value) {
+        type = EX_LIT;
+        data.lit = value;
+    }
+    EX_TREE(const char *label, SECTION *section, unsigned value);
+
+    ~EX_TREE(); //{ free_tree(); };
+    enum ex_type type;
 
     char           *cp;         /* points to end of parsed expression */
 
     union {
         struct {
-            struct ex_tree *left,
-                           *right;      /* Left, right children */
+            EX_TREE *left,
+                    *right;      /* Left, right children */
         } child;
         unsigned        lit;    /* Literal value */
         SYMBOL         *symbol; /* Symbol reference */
     } data;
-} EX_TREE;
 
-
-EX_TREE        *new_ex_tree(
-    void);
-void            free_tree(
-    EX_TREE *tp);
-
-EX_TREE        *new_ex_lit(
-    unsigned value);
-EX_TREE        *ex_err(
-    EX_TREE *tp,
-    char *cp);
-
-EX_TREE        *evaluate(
-    EX_TREE *tp,
-    int undef);
-
+    // void            free_tree();
+    // EX_TREE        *new_ex_lit(unsigned value);
+    EX_TREE        *ex_err(char *cp) { return ::ex_err(this, cp); };
+    EX_TREE        *evaluate(int undef);
+} ;
 
 #endif

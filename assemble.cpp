@@ -202,7 +202,7 @@ static int assemble(
                        must be a literal */
                     if (value->type != EX_LIT) {
                         report(stack->top, "Can't ORG to non-absolute location\n");
-                        free_tree(value);
+                        delete (value);
                         free(label);
                         return 0;
                     }
@@ -210,7 +210,7 @@ static int assemble(
                     list_value(stack->top, DOT);
                     change_dot(tr, 0);
                 }
-                free_tree(value);
+                delete (value);
                 free(label);
                 return 1;
             }
@@ -235,7 +235,7 @@ static int assemble(
             if (sym != NULL)
                 list_value(stack->top, sym->value);
 
-            free_tree(value);
+            delete (value);
             free(label);
 
             return sym != NULL;
@@ -293,7 +293,7 @@ static int assemble(
                         if (ident)     /* An existing ident? */
                             free(ident);        /* Discard it. */
 
-                        ident = memcheck(malloc(len + 1));
+                        ident = (char *)memcheck(malloc(len + 1));
                         memcpy(ident, cp, len);
                         ident[len] = 0;
                         upcase(ident);
@@ -590,7 +590,7 @@ static int assemble(
                                     list_level = savelist;
                                 }
 
-                                macstr->vtbl->delete(macstr);
+                                macstr->vtbl->_delete(macstr);
                             } else
                                 report(stack->top, "MACRO %s not found\n", label);
 
@@ -683,7 +683,7 @@ static int assemble(
                     cp = skipwhite(cp);
                     if (!EOL(*cp)) {
                         if (xfer_address)
-                            free_tree(xfer_address);
+                            delete (xfer_address);
                         xfer_address = parse_expr(cp, 0);
                     }
                     return 1;
@@ -706,12 +706,12 @@ static int assemble(
                             value = parse_expr(cp, 1);
                             cp = value->cp;
                             ok = eval_defined(value);
-                            free_tree(value);
+                            delete (value);
                         } else if (strcmp(label, "NDF") == 0) {
                             value = parse_expr(cp, 1);
                             cp = value->cp;
                             ok = eval_undefined(value);
-                            free_tree(value);
+                            delete (value);
                         } else if (strcmp(label, "B") == 0) {
                             char           *thing;
 
@@ -719,7 +719,7 @@ static int assemble(
                             if (!EOL(*cp))
                                 thing = getstring(cp, &cp);
                             else
-                                thing = memcheck(strdup(""));
+                                thing = (char *)memcheck(strdup(""));
                             ok = (*thing == 0);
                             free(thing);
                         } else if (strcmp(label, "NB") == 0) {
@@ -729,7 +729,7 @@ static int assemble(
                             if (!EOL(*cp))
                                 thing = getstring(cp, &cp);
                             else
-                                thing = memcheck(strdup(""));
+                                thing = (char *)memcheck(strdup(""));
                             ok = (*thing != 0);
                             free(thing);
                         } else if (strcmp(label, "IDN") == 0) {
@@ -741,7 +741,7 @@ static int assemble(
                             if (!EOL(*cp))
                                 thing2 = getstring(cp, &cp);
                             else
-                                thing2 = memcheck(strdup(""));
+                                thing2 = (char *)memcheck(strdup(""));
                             ok = (strcmp(thing1, thing2) == 0);
                             free(thing1);
                             free(thing2);
@@ -754,7 +754,7 @@ static int assemble(
                             if (!EOL(*cp))
                                 thing2 = getstring(cp, &cp);
                             else
-                                thing2 = memcheck(strdup(""));
+                                thing2 = (char *)memcheck(strdup(""));
                             ok = (strcmp(thing1, thing2) != 0);
                             free(thing1);
                             free(thing2);
@@ -768,7 +768,7 @@ static int assemble(
                             if (value->type != EX_LIT) {
                                 report(stack->top, "Bad .IF expression\n");
                                 list_value(stack->top, 0);
-                                free_tree(value);
+                                delete (value);
                                 ok = FALSE;     /* Pick something. */
                             } else {
                                 unsigned        word = 0;
@@ -799,7 +799,7 @@ static int assemble(
 
                                 list_value(stack->top, word);
 
-                                free_tree(value);
+                                delete (value);
                             }
                         }
 
@@ -889,7 +889,7 @@ static int assemble(
 
                         label = get_symbol(cp, &cp, NULL);
                         if (label == NULL)
-                            label = memcheck(strdup(""));       /* Allow blank */
+                            label = (char *)memcheck(strdup(""));       /* Allow blank */
 
                         sectsym = lookup_sym(label, &section_st);
                         if (sectsym) {
@@ -1015,7 +1015,7 @@ static int assemble(
                             DOT += value->data.lit * (op->value == P_BLKW ? 2 : 1);
                             change_dot(tr, 0);
                         }
-                        free_tree(value);
+                        delete (value);
                         return ok;
                     }
 
@@ -1031,7 +1031,7 @@ static int assemble(
                                 value = parse_expr(cp, 0);
                                 cp = value->cp;
                                 store_value(stack, tr, 1, value);
-                                free_tree(value);
+                                delete (value);
                             } else {
                                 char            quote = *cp++;
 
@@ -1067,7 +1067,7 @@ static int assemble(
                         endstr[2] = 0;
 
                         len = strcspn(cp, endstr);
-                        radstr = memcheck(malloc(len + 1));
+                        radstr = (char *)memcheck(malloc(len + 1));
                         memcpy(radstr, cp, len);
                         radstr[len] = 0;
                         cp += len;
@@ -1122,7 +1122,7 @@ static int assemble(
                             }
 
                             store_word(stack->top, tr, 2, word);
-                            free_tree(value);
+                            delete (value);
                         }
                         return 1;
 
@@ -1204,7 +1204,7 @@ static int assemble(
                                     || sym->section != current_pc->section) {
                                     report(stack->top, "Bad branch target\n");
                                     store_word(stack->top, tr, 2, op->value);
-                                    free_tree(value);
+                                    delete (value);
                                     return 0;
                                 }
 
@@ -1216,7 +1216,7 @@ static int assemble(
                                 if (value->type != EX_LIT) {
                                     report(stack->top, "Bad branch target\n");
                                     store_word(stack->top, tr, 2, op->value);
-                                    free_tree(value);
+                                    delete (value);
                                     return 0;
                                 }
 
@@ -1233,7 +1233,7 @@ static int assemble(
 
                             store_word(stack->top, tr, 2, op->value | offset);
 
-                            free_tree(value);
+                            delete (value);
                         }
                         return 1;
 
@@ -1247,7 +1247,7 @@ static int assemble(
                             cp = value->cp;
 
                             reg = get_register(value);
-                            free_tree(value);
+                            delete (value);
                             if (reg == NO_REG) {
                                 report(stack->top, "Illegal addressing mode\n");
                                 return 0;
@@ -1268,13 +1268,13 @@ static int assemble(
 
                                 if (!express_sym_offset(value, &sym, &offset)) {
                                     report(stack->top, "Bad branch target\n");
-                                    free_tree(value);
+                                    delete (value);
                                     return 0;
                                 }
                                 /* Must be same section */
                                 if (sym->section != current_pc->section) {
                                     report(stack->top, "Bad branch target\n");
-                                    free_tree(value);
+                                    delete (value);
                                     offset = 0;
                                 } else {
                                     /* Calculate byte offset */
@@ -1297,7 +1297,7 @@ static int assemble(
                             offset >>= 1;       /* Shift to become word offset */
                             store_word(stack->top, tr, 2, op->value | offset | (reg << 6));
 
-                            free_tree(value);
+                            delete (value);
                         }
                         return 1;
 
@@ -1325,7 +1325,7 @@ static int assemble(
                             reg = get_register(value);
                             if (reg == NO_REG) {
                                 report(stack->top, "Illegal addressing mode\n");
-                                free_tree(value);
+                                delete (value);
                                 free_addr_mode(&mode);
                                 return 0;
                             }
@@ -1334,7 +1334,7 @@ static int assemble(
                             word = op->value | mode.type | (reg << 6);
                             store_word(stack->top, tr, 2, word);
                             mode_extension(tr, &mode, stack->top);
-                            free_tree(value);
+                            delete (value);
                         }
                         return 1;
 
@@ -1351,7 +1351,7 @@ static int assemble(
                             reg = get_register(value);
                             if (reg == NO_REG) {
                                 report(stack->top, "Illegal addressing mode\n");
-                                free_tree(value);
+                                delete (value);
                                 return 0;
                             }
 
@@ -1363,13 +1363,13 @@ static int assemble(
 
                             if (!get_mode(cp, &cp, &mode)) {
                                 report(stack->top, "Illegal addressing mode\n");
-                                free_tree(value);
+                                delete (value);
                                 return 0;
                             }
                             word = op->value | mode.type | (reg << 6);
                             store_word(stack->top, tr, 2, word);
                             mode_extension(tr, &mode, stack->top);
-                            free_tree(value);
+                            delete (value);
                         }
                         return 1;
 
@@ -1383,12 +1383,12 @@ static int assemble(
                             reg = get_register(value);
                             if (reg == NO_REG) {
                                 report(stack->top, "Illegal addressing mode\n");
-                                free_tree(value);
+                                delete (value);
                                 reg = 0;
                             }
 
                             store_word(stack->top, tr, 2, op->value | reg);
-                            free_tree(value);
+                            delete (value);
                         }
                         return 1;
 
@@ -1423,7 +1423,7 @@ static int assemble(
                             word = op->value | mode.type | (reg << 6);
                             store_word(stack->top, tr, 2, word);
                             mode_extension(tr, &mode, stack->top);
-                            free_tree(value);
+                            delete (value);
                         }
                         return 1;
 
@@ -1446,20 +1446,20 @@ static int assemble(
                             cp = skipwhite(cp);
                             if (*cp++ != ',') {
                                 report(stack->top, "Illegal addressing mode\n");
-                                free_tree(value);
+                                delete (value);
                                 return 0;
                             }
 
                             if (!get_mode(cp, &cp, &mode)) {
                                 report(stack->top, "Illegal addressing mode\n");
-                                free_tree(value);
+                                delete (value);
                                 return 0;
                             }
 
                             word = op->value | mode.type | (reg << 6);
                             store_word(stack->top, tr, 2, word);
                             mode_extension(tr, &mode, stack->top);
-                            free_tree(value);
+                            delete (value);
                         }
                         return 1;
 

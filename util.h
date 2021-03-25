@@ -38,19 +38,9 @@ DAMAGE.
 
 #include "stream2.h"
 
-char           *my_ultoa(
-    unsigned long val,
-    char *buf,
-    unsigned int base);
-char           *my_ltoa(
-    long val,
-    char *buf,
-    unsigned int base);
-void            my_searchenv(
-    char *name,
-    char *envname,
-    char *hitfile,
-    int hitlen);
+char           *my_ultoa(unsigned long val, char *buf, unsigned int base);
+char           *my_ltoa(long val,  char *buf, unsigned int base);
+void            my_searchenv(const char *name, const char *envname, char *hitfile, int hitlen);
 
 /* Cover a few platform-dependencies */
 
@@ -76,15 +66,9 @@ typedef unsigned long long ulong64;
 
 #define SIZEOF_MEMBER(s, m) (sizeof((s *)0)->m)
 
-void            upcase(
-    char *str);
-
-void            padto(
-    char *str,
-    int to);
-
-void           *memcheck(
-    void *ptr);
-
+void            upcase(char *str);
+void            padto(char *str, int to);
+void           *memcheck(void *ptr);
+// #define memcheck(a) static_cast<char *>(a)
 
 #endif /* UTIL__H */

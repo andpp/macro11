@@ -43,9 +43,7 @@ static int dolist(
 
 /* list_source saves a text line for later listing by list_flush */
 
-void list_source(
-    STREAM *str,
-    char *cp)
+void list_source(STREAM *str, const char *cp)
 {
     if (dolist()) {
         int             len = strcspn(cp, "\n");
@@ -53,12 +51,12 @@ void list_source(
         /* Save the line text away for later... */
         if (listline)
             free(listline);
-        listline = memcheck(malloc(len + 1));
+        listline = (char *)memcheck(malloc(len + 1));
         memcpy(listline, cp, len);
         listline[len] = 0;
 
         if (!binline)
-            binline = memcheck(malloc(sizeof(LSTFORMAT) + 16));
+            binline = (char *)memcheck(malloc(sizeof(LSTFORMAT) + 16));
 
         sprintf(binline, "%*s%*d", (int)SIZEOF_MEMBER(LSTFORMAT, flag), "", (int)SIZEOF_MEMBER(LSTFORMAT, line_number),
                 str->line);
@@ -119,12 +117,7 @@ void list_value(
 
 /* Print a word to the listing file */
 
-void list_word(
-    STREAM *str,
-    unsigned addr,
-    unsigned value,
-    int size,
-    char *flags)
+void list_word(STREAM *str, unsigned addr, unsigned value, int size, const char *flags)
 {
     if (dolist()) {
         list_fit(str, addr);
@@ -138,13 +131,10 @@ void list_word(
 
 
 /* reports errors */
-void report(
-    STREAM *str,
-    char *fmt,
-    ...)
+void report(STREAM *str, const char *fmt, ...)
 {
     va_list         ap;
-    char           *name = "**";
+    const char     *name = "**";
     int             line = 0;
 
     if (!pass)

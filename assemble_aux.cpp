@@ -24,7 +24,7 @@
 SECTION        *new_section(
     void)
 {
-    SECTION        *sect = memcheck(malloc(sizeof(SECTION)));
+    SECTION        *sect = static_cast<SECTION *>(memcheck(malloc(sizeof(SECTION))));
 
     sect->flags = 0;
     sect->size = 0;
@@ -167,7 +167,7 @@ void free_addr_mode(
     ADDR_MODE *mode)
 {
     if (mode->offset)
-        free_tree(mode->offset);
+        delete (mode->offset);
     mode->offset = NULL;
 }
 
@@ -560,7 +560,7 @@ void push_cond(
     last_cond++;
     assert(last_cond < MAX_CONDS);
     conds[last_cond].ok = ok;
-    conds[last_cond].file = memcheck(strdup(str->name));
+    conds[last_cond].file = static_cast<char *>(memcheck(strdup(str->name)));
     conds[last_cond].line = str->line;
 }
 
@@ -645,7 +645,7 @@ int do_word(
 
         cp = skipdelim(value->cp);
 
-        free_tree(value);
+        delete (value);
     } while (cp = skipdelim(cp), !EOL(*cp));
 
     return 1;

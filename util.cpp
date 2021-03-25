@@ -123,11 +123,7 @@ char           *my_ltoa(
   this function.
 */
 
-void my_searchenv(
-    char *name,
-    char *envname,
-    char *hitfile,
-    int hitlen)
+void my_searchenv(const char *name, const char *envname, char *hitfile, int hitlen)
 {
     char           *env;
     char           *envcopy;
@@ -158,7 +154,7 @@ void my_searchenv(
 
     while ((cp = strtok(envcopy, PATHSEP)) != NULL) {
         struct stat     info;
-        char           *concat = malloc(strlen(cp) + strlen(name) + 2);
+        char           *concat = (char *)malloc(strlen(cp) + strlen(name) + 2);
 
         if (concat == NULL) {
             free(envcopy);
@@ -186,9 +182,7 @@ void my_searchenv(
 
 
 /* memcheck - crash out if a pointer (returned from malloc) is NULL. */
-
-void           *memcheck(
-    void *ptr)
+void *memcheck( void *ptr)
 {
     if (ptr == NULL) {
         fprintf(stderr, "Out of memory.\n");

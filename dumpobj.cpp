@@ -109,7 +109,7 @@ char           *readrec(
         return NULL;
     }
 
-    buf = malloc(*len);
+    buf = (char *)malloc(*len);
     if (buf == NULL) {
         fprintf(stderr, "Out of memory allocating %d bytes\n", *len);
         return NULL;                   // Bad alloc
@@ -279,7 +279,7 @@ void add_gsdline(
 {
     if (nr_gsds >= gsdsize || all_gsds == NULL) {
         gsdsize += 128;
-        all_gsds = realloc(all_gsds, gsdsize * sizeof(char *));
+        all_gsds = (char **)realloc(all_gsds, gsdsize * sizeof(char *));
         if (all_gsds == NULL) {
             fprintf(stderr, "Out of memory\n");
             exit(EXIT_FAILURE);
@@ -301,7 +301,7 @@ void got_gsd(
         unsigned        value;
         unsigned        flags;
 
-        gsdline = malloc(256);
+        gsdline = (char *)malloc(256);
         if (gsdline == NULL) {
             fprintf(stderr, "Out of memory\n");
             exit(EXIT_FAILURE);
@@ -347,7 +347,7 @@ void got_gsd(
             break;
         }
 
-        gsdline = realloc(gsdline, strlen(gsdline) + 1);
+        gsdline = (char *)realloc(gsdline, strlen(gsdline) + 1);
         add_gsdline(gsdline);
     }
 }
@@ -356,8 +356,8 @@ int compare_gsdlines(
     const void *p1,
     const void *p2)
 {
-    const char     *const *l1 = p1,
-    *const         *l2 = p2;
+    const char     *const *l1 = (const char * const *)p1;
+    const char     *const *l2 = (const char * const *)p2;
 
     return strcmp(*l1, *l2);
 }

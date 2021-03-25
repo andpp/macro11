@@ -40,15 +40,9 @@ DAMAGE.
 struct stream;
 
 typedef struct stream_vtbl {
-    void            (
-    *delete)        (
-    struct stream * stream);    // Destructor
-    char           *(
-    *gets)          (
-    struct stream * stream);    // "gets" function
-    void            (
-    *rewind)        (
-    struct stream * stream);    // "rewind" function
+    void            (*_delete) (struct stream * stream);    // Destructor
+    char           *(*gets)   (struct stream * stream);    // "gets" function
+    void            (*rewind) (struct stream * stream);    // "rewind" function
 } STREAM_VTBL;
 
 typedef struct stream {
@@ -84,54 +78,28 @@ typedef struct stack {
 } STACK;
 
 #define STREAM_BUFFER_SIZE 1024        // This limits the max size of an input line.
-BUFFER         *new_buffer(
-    void);
-BUFFER         *buffer_clone(
-    BUFFER *from);
-void            buffer_resize(
-    BUFFER *buff,
-    int size);
-void            buffer_free(
-    BUFFER *buf);
-void            buffer_appendn(
-    BUFFER *buf,
-    char *str,
-    int len);
-void            buffer_append_line(
-    BUFFER *buf,
-    char *str);
+BUFFER         *new_buffer(void);
+BUFFER         *buffer_clone(BUFFER *from);
+void            buffer_resize(BUFFER *buff, int size);
+void            buffer_free(BUFFER *buf);   
+void            buffer_appendn(BUFFER *buf, char *str, int len);
+void            buffer_append_line(BUFFER *buf, char *str);
 
-STREAM         *new_buffer_stream(
-    BUFFER *buf,
-    char *name);
-void            buffer_stream_set_buffer(
-    BUFFER_STREAM * bstr,
-    BUFFER *buf);
+STREAM         *new_buffer_stream(BUFFER *buf, char *name);
+void            buffer_stream_set_buffer( BUFFER_STREAM * bstr, BUFFER *buf);
 
 /* Provide these so that macro11 can derive from a BUFFER_STREAM */
 extern STREAM_VTBL buffer_stream_vtbl;
-void            buffer_stream_construct(
-    BUFFER_STREAM * bstr,
-    BUFFER *buf,
-    char *name);
-char           *buffer_stream_gets(
-    STREAM *str);
-void            buffer_stream_delete(
-    STREAM *str);
-void            buffer_stream_rewind(
-    STREAM *str);
+void            buffer_stream_construct(BUFFER_STREAM * bstr, BUFFER *buf, char *name);
+char           *buffer_stream_gets(STREAM *str);
+void            buffer_stream_delete(STREAM *str);
+void            buffer_stream_rewind(STREAM *str);
 
-STREAM         *new_file_stream(
-    char *filename);
+STREAM         *new_file_stream(char *filename);
 
-void            stack_init(
-    STACK *stack);
-void            stack_push(
-    STACK *stack,
-    STREAM *str);
-void            stack_pop(
-    STACK *stack);
-char           *stack_gets(
-    STACK *stack);
+void            stack_init(STACK *stack);
+void            stack_push(STACK *stack, STREAM *str);
+void            stack_pop(STACK *stack);
+char           *stack_gets(STACK *stack);
 
 #endif /* STREAM2_H */

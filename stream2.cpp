@@ -53,7 +53,7 @@ DAMAGE.
 BUFFER         *new_buffer(
     void)
 {
-    BUFFER         *buf = memcheck(malloc(sizeof(BUFFER)));
+    BUFFER         *buf = (BUFFER *)memcheck(malloc(sizeof(BUFFER)));
 
     buf->length = 0;
     buf->size = 0;
@@ -78,9 +78,9 @@ void buffer_resize(
         buff->buffer = NULL;
     } else {
         if (buff->buffer == NULL)
-            buff->buffer = memcheck(malloc(buff->size));
+            buff->buffer = (char *)memcheck(malloc(buff->size));
         else
-            buff->buffer = memcheck(realloc(buff->buffer, buff->size));
+            buff->buffer = (char *)memcheck(realloc(buff->buffer, buff->size));
     }
 }
 
@@ -123,9 +123,9 @@ void buffer_appendn(
         buf->size = needed + GROWBUF_INCR;
 
         if (buf->buffer == NULL)
-            buf->buffer = memcheck(malloc(buf->size));
+            buf->buffer = (char *)memcheck(malloc(buf->size));
         else
-            buf->buffer = memcheck(realloc(buf->buffer, buf->size));
+            buf->buffer = (char *)memcheck(realloc(buf->buffer, buf->size));
     }
 
     memcpy(buf->buffer + buf->length, str, len);
@@ -156,7 +156,7 @@ void stream_construct(
     char *name)
 {
     str->line = 0;
-    str->name = memcheck(strdup(name));
+    str->name = (char *)memcheck(strdup(name));
     str->next = NULL;
     str->vtbl = NULL;
 }
@@ -192,7 +192,7 @@ char           *buffer_stream_gets(
 
     /* Find the next line in preparation for the next call */
 
-    nl = memchr(cp, '\n', buf->length - bstr->offset);
+    nl = (char *)memchr(cp, '\n', buf->length - bstr->offset);
 
     if (nl)
         nl++;
@@ -238,7 +238,7 @@ void buffer_stream_construct(
 {
     bstr->stream.vtbl = &buffer_stream_vtbl;
 
-    bstr->stream.name = memcheck(strdup(name));
+    bstr->stream.name = (char *)memcheck(strdup(name));
 
     bstr->buffer = buffer_clone(buf);
     bstr->offset = 0;
@@ -262,7 +262,7 @@ STREAM         *new_buffer_stream(
     BUFFER *buf,
     char *name)
 {
-    BUFFER_STREAM  *bstr = memcheck(malloc(sizeof(BUFFER_STREAM)));
+    BUFFER_STREAM  *bstr = (BUFFER_STREAM *)memcheck(malloc(sizeof(BUFFER_STREAM)));
 
     buffer_stream_construct(bstr, buf, name);
     return &bstr->stream;
@@ -346,11 +346,11 @@ STREAM         *new_file_stream(
     if (fp == NULL)
         return NULL;
 
-    str = memcheck(malloc(sizeof(FILE_STREAM)));
+    str = (FILE_STREAM *)memcheck(malloc(sizeof(FILE_STREAM)));
 
     str->stream.vtbl = &file_stream_vtbl;
-    str->stream.name = memcheck(strdup(filename));
-    str->buffer = memcheck(malloc(STREAM_BUFFER_SIZE));
+    str->stream.name = (char *)memcheck(strdup(filename));
+    str->buffer = (char *)memcheck(malloc(STREAM_BUFFER_SIZE));
     str->fp = fp;
     str->stream.line = 0;
 
@@ -375,7 +375,7 @@ void stack_pop(
     STREAM         *top = stack->top;
     STREAM         *next = top->next;
 
-    top->vtbl->delete(top);
+    top->vtbl->_delete(top);
     stack->top = next;
 }
 

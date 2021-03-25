@@ -138,7 +138,7 @@ static void print_help(
     printf("\n");
 }
 
-void usage(char *message) {
+void usage(const char *message) {
     fputs(message, stderr);
     exit(EXIT_FAILURE);
 }
@@ -207,7 +207,7 @@ int main(
                 /* P for search path */
                 /* The -p option gives the name of a directory in
                    which .MCALLed macros may be found.  */  {
-                    char           *env = getenv("MCALL");
+                    const char     *env = getenv("MCALL");
                     char           *temp;
 
                     if(arg >= argc-1 || *argv[arg+1] == '-') {
@@ -217,7 +217,7 @@ int main(
                     if (env == NULL)
                         env = "";
 
-                    temp = memcheck(malloc(strlen(env) + strlen(argv[arg + 1]) + 8));
+                    temp = static_cast<char *>(memcheck(malloc(strlen(env) + strlen(argv[arg + 1]) + 8)));
                     strcpy(temp, "MCALL=");
                     strcat(temp, env);
                     strcat(temp, PATHSEP);
@@ -293,9 +293,9 @@ int main(
 
     text_init(&tr, NULL, 0);
 
-    module_name = memcheck(strdup(""));
+    module_name = static_cast<char *>(memcheck(strdup("")));
 
-    xfer_address = new_ex_lit(1);      /* The undefined transfer address */
+    xfer_address = new EX_TREE(1);      /* The undefined transfer address */
 
     stack_init(&stack);
     /* Push the files onto the input stream in reverse order */

@@ -39,9 +39,7 @@ char           *skipdelim(
 /* the string is delimited by trailing comma or whitespace. */
 /* Allows nested <>'s */
 
-char           *getstring(
-    char *cp,
-    char **endp)
+char           *getstring(char *cp, char **endp)
 {
     int             len;
     int             start;
@@ -54,7 +52,7 @@ char           *getstring(
             *endp = cp + len;
     }
 
-    str = memcheck(malloc(len + 1));
+    str = (char *)memcheck(malloc(len + 1));
     memcpy(str, cp + start, len);
     str[len] = 0;
 
@@ -146,13 +144,13 @@ int get_mode(
             value = parse_expr(tcp, 0);
             reg = get_register(value);
             if (reg == NO_REG || (tcp = skipwhite(value->cp), *tcp++ != ')')) {
-                free_tree(value);
+                delete (value);
                 return FALSE;
             }
             mode->type |= 040 | reg;
             if (endp)
                 *endp = tcp;
-            free_tree(value);
+            delete (value);
             return TRUE;
         }
     }
@@ -166,7 +164,7 @@ int get_mode(
         reg = get_register(value);
 
         if (reg == NO_REG || (tcp = skipwhite(value->cp), *tcp++ != ')')) {
-            free_tree(value);
+            delete (value);
             return FALSE;
         }
 
@@ -176,14 +174,14 @@ int get_mode(
             if (endp)
                 *endp = tcp;
             mode->type |= 020 | reg;
-            free_tree(value);
+            delete (value);
             return TRUE;
         }
 
         if (mode->type == 010) {       /* For @(Rn) there's an implied 0 offset */
-            mode->offset = new_ex_lit(0);
+            mode->offset = new EX_TREE(0);
             mode->type |= 060 | reg;
-            free_tree(value);
+            delete (value);
             if (endp)
                 *endp = tcp;
             return TRUE;
@@ -191,7 +189,7 @@ int get_mode(
 
         mode->type |= 010 | reg;       /* Mode 10 is register indirect as
                                           in (Rn) */
-        free_tree(value);
+        delete (value);
         if (endp)
             *endp = tcp;
         return TRUE;
@@ -210,13 +208,13 @@ int get_mode(
         value = parse_expr(cp + 1, 0);
         reg = get_register(value);
         if (reg == NO_REG || (cp = skipwhite(value->cp), *cp++ != ')')) {
-            free_tree(value);
+            delete (value);
             return FALSE;              /* Syntax error in addressing mode */
         }
 
         mode->type |= 060 | reg;
 
-        free_tree(value);
+        delete (value);
 
         if (endp)
             *endp = cp;
@@ -233,7 +231,7 @@ int get_mode(
         SYMBOL         *sym = mode->offset->data.symbol;
 
         if (sym->section->type == SECTION_REGISTER) {
-            free_tree(mode->offset);
+            delete (mode->offset);
             mode->offset = NULL;
             mode->type |= sym->value;
             return TRUE;
@@ -373,7 +371,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, ADD_PREC);
-            tp = new_ex_tree();
+            tp = new EX_TREE();
             tp->type = EX_ADD;
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
@@ -386,7 +384,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, ADD_PREC);
-            tp = new_ex_tree();
+            tp = new EX_TREE();
             tp->type = EX_SUB;
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
@@ -399,7 +397,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, MUL_PREC);
-            tp = new_ex_tree();
+            tp = new EX_TREE();
             tp->type = EX_MUL;
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
@@ -412,7 +410,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, MUL_PREC);
-            tp = new_ex_tree();
+            tp = new EX_TREE();
             tp->type = EX_DIV;
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
@@ -425,7 +423,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, 2);
-            tp = new_ex_tree();
+            tp = new EX_TREE();
             tp->type = EX_OR;
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
@@ -438,7 +436,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, AND_PREC);
-            tp = new_ex_tree();
+            tp = new EX_TREE();
             tp->type = EX_AND;
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
@@ -495,7 +493,7 @@ char           *get_symbol(
     if (len > symbol_len)
         len = symbol_len;
 
-    symcp = memcheck(malloc(len + 1));
+    symcp = (char *)memcheck(malloc(len + 1));
 
     memcpy(symcp, cp, len);
     symcp[len] = 0;
@@ -507,7 +505,7 @@ char           *get_symbol(
         /* Turn to local label format */
         if (digits == 1) {
             if (symcp[len - 1] == '$') {
-                char           *newsym = memcheck(malloc(32));  /* Overkill */
+                char           *newsym = (char *)memcheck(malloc(32));  /* Overkill */
 
                 sprintf(newsym, "%ld$%d", strtol(symcp, NULL, 10), lsb);
                 free(symcp);
@@ -608,7 +606,7 @@ EX_TREE        *parse_unary(
             return ex_err(NULL, cp);
 
         /* This returns references to the built-in register symbols */
-        tp = new_ex_tree();
+        tp = new EX_TREE();
         tp->type = EX_SYM;
         tp->data.symbol = reg_sym[reg];
         tp->cp = cp;
@@ -617,7 +615,7 @@ EX_TREE        *parse_unary(
 
     /* Unary negate */
     if (*cp == '-') {
-        tp = new_ex_tree();
+        tp = new EX_TREE();
         tp->type = EX_NEG;
         tp->data.child.left = parse_unary(cp + 1);
         tp->cp = tp->data.child.left->cp;
@@ -634,7 +632,7 @@ EX_TREE        *parse_unary(
         switch (tolower(cp[1])) {
         case 'c':
             /* ^C, ones complement */
-            tp = new_ex_tree();
+            tp = new EX_TREE();
             tp->type = EX_COM;
             tp->data.child.left = parse_unary(cp + 2);
             tp->cp = tp->data.child.left->cp;
@@ -679,7 +677,7 @@ EX_TREE        *parse_unary(
                     value = rad50(cp + start, NULL);
                 else
                     value = rad50(cp, &endcp);
-                tp = new_ex_lit(value);
+                tp = new EX_TREE(value);
                 tp->cp = endcp;
                 return tp;
             }
@@ -691,7 +689,7 @@ EX_TREE        *parse_unary(
                 if (!parse_float(cp + 2, &endcp, 1, flt)) {
                     tp = ex_err(NULL, cp + 2);
                 } else {
-                    tp = new_ex_lit(flt[0]);
+                    tp = new EX_TREE(flt[0]);
                     tp->cp = endcp;
                 }
                 return tp;
@@ -731,7 +729,7 @@ EX_TREE        *parse_unary(
     if (*cp == '\'') {
         /* 'x single ASCII character */
         cp++;
-        tp = new_ex_tree();
+        tp = new EX_TREE();
         tp->type = EX_LIT;
         tp->data.lit = *cp & 0xff;
         tp->cp = ++cp;
@@ -741,7 +739,7 @@ EX_TREE        *parse_unary(
     if (*cp == '\"') {
         /* "xx ASCII character pair */
         cp++;
-        tp = new_ex_tree();
+        tp = new EX_TREE();
         tp->type = EX_LIT;
         tp->data.lit = (cp[0] & 0xff) | ((cp[1] & 0xff) << 8);
         tp->cp = cp + 2;
@@ -771,7 +769,7 @@ EX_TREE        *parse_unary(
             if (*endcp == '.')
                 endcp++;
 
-            tp = new_ex_tree();
+            tp = new EX_TREE();
             tp->type = EX_LIT;
             tp->data.lit = value;
             tp->cp = endcp;
@@ -805,7 +803,7 @@ EX_TREE        *parse_unary(
         }
 
         if (sym != NULL) {
-            tp = new_ex_tree();
+            tp = new EX_TREE();
             tp->cp = cp;
             tp->type = EX_SYM;
             tp->data.symbol = sym;
@@ -816,7 +814,7 @@ EX_TREE        *parse_unary(
 
         /* The symbol was not found. Create an "undefined symbol"
            reference. */
-        sym = memcheck(malloc(sizeof(SYMBOL)));
+        sym = (SYMBOL *)memcheck(malloc(sizeof(SYMBOL)));
         sym->label = label;
         sym->flags = SYMBOLFLAG_UNDEFINED | local;
         sym->stmtno = stmtno;
@@ -824,7 +822,7 @@ EX_TREE        *parse_unary(
         sym->section = &absolute_section;
         sym->value = 0;
 
-        tp = new_ex_tree();
+        tp = new EX_TREE();
         tp->cp = cp;
         tp->type = EX_UNDEFINED_SYM;
         tp->data.symbol = sym;
@@ -846,10 +844,10 @@ EX_TREE        *parse_expr(
     EX_TREE        *value;
 
     expr = parse_binary(cp, 0, 0);     /* Parse into a tree */
-    value = evaluate(expr, undef);     /* Perform the arithmetic */
+    value = expr->evaluate(undef);     /* Perform the arithmetic */
     value->cp = expr->cp;              /* Pointer to end of text is part of
                                           the rootmost node  */
-    free_tree(expr);                   /* Discard parse in favor of
+    delete (expr);                   /* Discard parse in favor of
                                           evaluation */
 
     return value;
