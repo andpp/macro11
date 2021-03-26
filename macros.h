@@ -19,10 +19,10 @@ struct ARG {
 
 /* A MACRO is a superstructure surrounding a SYMBOL. */
 
-struct MACRO {
+struct MACRO : public SYMBOL {
     MACRO(char *label);
     ~MACRO();
-    SYMBOL   *sym;        /* Surrounds a symbol, contains the macro name */
+    // SYMBOL   *sym;        /* Surrounds a symbol, contains the macro name */
     ARG      *args;       /* The argument list */
     BUFFER   *text;       /* The macro text */
 };

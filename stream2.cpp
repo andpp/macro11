@@ -121,7 +121,7 @@ void buffer_free(BUFFER *buf)
 {
     if (buf) {
         if (--(buf->use) == 0) {
-            free(buf->buffer);
+            // free(buf->buffer);
             delete (buf);
         }
     }
@@ -351,7 +351,7 @@ void STACK::pop()
     STREAM         *_top = top;
 
     top = top->next;
-    delete (top);
+    delete (_top);
 }
 
 /* stack_push pushes a STREAM onto the top of the stack */

@@ -1,3 +1,5 @@
+**/*.lst
+**/*.obj
 *.o
 dumpobj
 macro11

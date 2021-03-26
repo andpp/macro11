@@ -46,8 +46,8 @@ MACRO_STREAM::MACRO_STREAM(STREAM *refstr, BUFFER *buf, MACRO *mac, ARG *args) :
     str_type = TYPE_MACRO_STREAM;
 
     free(name);
-    char           *name = (char *)memcheck(malloc(strlen(refstr->name) + 32));
-    sprintf(name, "%s:%d->%s", refstr->name, refstr->line, mac->sym->label);
+    name = (char *)memcheck(malloc(strlen(refstr->name) + 32));
+    sprintf(name, "%s:%d->%s", refstr->name, refstr->line, mac->label);
 
     // mstr->bstr.stream.vtbl = &macro_stream_vtbl;
     /* Count the args and save their number */
@@ -132,7 +132,7 @@ void dumpmacro(MACRO *mac, FILE *fp)
 {
     ARG            *arg;
 
-    fprintf(fp, ".MACRO %s ", mac->sym->label);
+    fprintf(fp, ".MACRO %s ", mac->label);
 
     for (arg = mac->args; arg != NULL; arg = arg->next) {
         fputs(arg->label, fp);
@@ -173,13 +173,14 @@ MACRO          *defmacro(
     mac = (MACRO *) macro_st.lookup_sym(label);
     if (mac) {
         /* Remove from the symbol table... */
-        macro_st.remove_sym(mac->sym);
+        macro_st.remove_sym(mac);
        delete (mac);
     }
 
     mac = new MACRO(label);
 
-    macro_st.add_table(mac->sym);
+    // macro_st.add_table(mac->sym);
+    macro_st.add_table(mac);
 
     argtail = &mac->args;
     cp = skipdelim(cp);
@@ -209,7 +210,7 @@ MACRO          *defmacro(
             arg->value = getstring(cp + 1, &cp);
             if (arg->value == NULL) {
                 report(stack->top, "Illegal macro argument\n");
-                macro_st.remove_sym(mac->sym);
+                macro_st.remove_sym(mac);
                 delete (mac);
                 return NULL;
             }
@@ -234,7 +235,7 @@ MACRO          *defmacro(
             levelmod = 1;
         }
 
-        read_body(stack, gb, mac->sym->label, called);
+        read_body(stack, gb, mac->label, called);
 
         list_level += levelmod;
 
@@ -508,15 +509,14 @@ static void dump_all_macros(
 
 /* Allocate a new macro */
 
-MACRO::MACRO(char *label)
+MACRO::MACRO(char *label) : SYMBOL(label)
 {
-    sym = new SYMBOL(label);
-    sym->flags = 0;
+    flags = 0;
     // sym.label = label;
-    sym->stmtno = stmtno;
-    sym->next = NULL;
-    sym->section = &macro_section;
-    sym->value = 0;
+    stmtno = stmtno;
+    next = NULL;
+    section = &macro_section;
+    value = 0;
     args = NULL;
     text = NULL;
 }
