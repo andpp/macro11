@@ -259,8 +259,7 @@ BUFFER         *mlb_entry(
         return NULL;
 
     /* Allocate a buffer to hold the text */
-    buf = new_buffer();
-    buffer_resize(buf, ent->length + 1);        /* Make it large enough */
+    buf = new BUFFER(ent->length + 1);        /* Make it large enough */
     bp = buf->buffer;
 
     fseek(mlb->fp, ent->position, SEEK_SET);
@@ -275,7 +274,7 @@ BUFFER         *mlb_entry(
     *bp++ = 0;                         /* Store trailing 0 delim */
 
     /* Now resize that buffer to the length actually read. */
-    buffer_resize(buf, (int) (bp - buf->buffer));
+    buf->buffer_resize((int) (bp - buf->buffer));
 
     return buf;
 }

@@ -297,16 +297,15 @@ int main(
 
     xfer_address = new EX_TREE(1);      /* The undefined transfer address */
 
-    stack_init(&stack);
+    stack.stack_init();
     /* Push the files onto the input stream in reverse order */
     for (i = nr_files - 1; i >= 0; --i) {
-        STREAM         *str = new_file_stream(fnames[i]);
-
-        if (str == NULL) {
+        FILE_STREAM         *str = new FILE_STREAM;
+        if (!str->init(fnames[i])) {
             report(NULL, "Unable to open file %s\n", fnames[i]);
             exit(EXIT_FAILURE);
         }
-        stack_push(&stack, str);
+        stack.push(str);
     }
 
     DOT = 0;
@@ -340,16 +339,15 @@ int main(
 
     text_init(&tr, obj, 0);
 
-    stack_init(&stack);                /* Superfluous... */
+    stack.stack_init();                /* Superfluous... */
     /* Re-push the files onto the input stream in reverse order */
     for (i = nr_files - 1; i >= 0; --i) {
-        STREAM         *str = new_file_stream(fnames[i]);
-
-        if (str == NULL) {
+        FILE_STREAM         *str = new FILE_STREAM;
+        if (!str->init(fnames[i])) {
             report(NULL, "Unable to open file %s\n", fnames[i]);
             exit(EXIT_FAILURE);
         }
-        stack_push(&stack, str);
+        stack.push(str);
     }
 
     DOT = 0;

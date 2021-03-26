@@ -45,50 +45,68 @@ DAMAGE.
 #include "util.h"
 
 #include "stream2.h"
+#include "listing.h"
 
 /* BUFFER functions */
 
 /* new_buffer allocates a new buffer */
 
-BUFFER         *new_buffer(
-    void)
+BUFFER::BUFFER()
 {
-    BUFFER         *buf = (BUFFER *)memcheck(malloc(sizeof(BUFFER)));
+    // BUFFER         *buf = (BUFFER *)memcheck(malloc(sizeof(BUFFER)));
 
-    buf->length = 0;
-    buf->size = 0;
-    buf->use = 1;
-    buf->buffer = NULL;
-    return buf;
+    length = 0;
+    size = 0;
+    use = 1;
+    buffer = NULL;
+    // return buf;
 }
+
+BUFFER::BUFFER(int _size)
+{
+    size = _size;
+    length = _size;
+    use = 1;
+
+    if (size == 0) {
+        buffer = NULL;
+    } else {
+        buffer = (char *)memcheck(malloc(size));
+    }
+
+}
+
+BUFFER::~BUFFER()
+{
+    if(buffer)
+       free(buffer);
+}
+
 
 /* buffer_resize makes the buffer at least the requested size. */
 /* If the buffer is already larger, then it will attempt */
 /* to shrink it. */
 
-void buffer_resize(
-    BUFFER *buff,
-    int size)
+void BUFFER::buffer_resize(int _size)
 {
-    buff->size = size;
-    buff->length = size;
+    size = _size;
+    length = _size;
 
     if (size == 0) {
-        free(buff->buffer);
-        buff->buffer = NULL;
+        free(buffer);
+        buffer = NULL;
     } else {
-        if (buff->buffer == NULL)
-            buff->buffer = (char *)memcheck(malloc(buff->size));
+        if (buffer == NULL)
+            buffer = (char *)memcheck(malloc(size));
         else
-            buff->buffer = (char *)memcheck(realloc(buff->buffer, buff->size));
+            buffer = (char *)memcheck(realloc(buffer, size));
     }
 }
 
 /* buffer_clone makes a copy of a buffer */
 /* Basically it increases the use count */
 
-BUFFER         *buffer_clone(
-    BUFFER *from)
+BUFFER *buffer_clone(BUFFER *from)
 {
     if (from)
         from->use++;
@@ -99,311 +117,265 @@ BUFFER         *buffer_clone(
 /* It decreases the use count, and if zero, */
 /* frees the memory. */
 
-void buffer_free(
-    BUFFER *buf)
+void buffer_free(BUFFER *buf)
 {
     if (buf) {
         if (--(buf->use) == 0) {
             free(buf->buffer);
-            free(buf);
+            delete (buf);
         }
     }
 }
 
 /* Append characters to the buffer. */
 
-void buffer_appendn(
-    BUFFER *buf,
-    char *str,
-    int len)
+void BUFFER::buffer_appendn(char *str, int len)
 {
-    int             needed = buf->length + len + 1;
+    int needed = length + len + 1;
 
-    if (needed >= buf->size) {
-        buf->size = needed + GROWBUF_INCR;
+    if (needed >= size) {
+        size = needed + GROWBUF_INCR;
 
-        if (buf->buffer == NULL)
-            buf->buffer = (char *)memcheck(malloc(buf->size));
+        if (buffer == NULL)
+            buffer = (char *)memcheck(malloc(size));
         else
-            buf->buffer = (char *)memcheck(realloc(buf->buffer, buf->size));
+            buffer = (char *)memcheck(realloc(buffer, size));
     }
 
-    memcpy(buf->buffer + buf->length, str, len);
-    buf->length += len;
-    buf->buffer[buf->length] = 0;
+    memcpy(buffer + length, str, len);
+    length += len;
+    buffer[length] = 0;
 }
 
 /* append a text line (zero or newline-delimited) */
 
-void buffer_append_line(
-    BUFFER *buf,
-    char *str)
+void BUFFER::buffer_append_line(char *str)
 {
-    char           *nl;
+    char  *nl;
 
     if ((nl = strchr(str, '\n')) != NULL)
-        buffer_appendn(buf, str, (int) (nl - str + 1));
+        buffer_appendn(str, (int) (nl - str + 1));
     else
-        buffer_appendn(buf, str, strlen(str));
+        buffer_appendn(str, strlen(str));
 }
 
 /* Base STREAM class methods */
 
 /* stream_construct initializes a newly allocated STREAM */
 
-void stream_construct(
-    STREAM *str,
-    char *name)
+STREAM::STREAM(char *name): str_type(TYPE_BASE_STREAM)
 {
-    str->line = 0;
-    str->name = (char *)memcheck(strdup(name));
-    str->next = NULL;
-    str->vtbl = NULL;
+    line = 0;
+    name = (char *)memcheck(strdup(name));
+    next = NULL;
 }
 
 /* stream_delete destroys and deletes (frees) a STREAM */
 
-void stream_delete(
-    STREAM *str)
+STREAM::~STREAM()
 {
-    free(str->name);
-    free(str);
+    free(name);
 }
 
 /* *** class BUFFER_STREAM implementation */
 
 /* STREAM::gets for a buffer stream */
 
-char           *buffer_stream_gets(
-    STREAM *str)
+char * BUFFER_STREAM::gets()
 {
     char           *nl;
     char           *cp;
-    BUFFER_STREAM  *bstr = (BUFFER_STREAM *) str;
-    BUFFER         *buf = bstr->buffer;
+    BUFFER         *buf = buffer;
 
     if (buf == NULL)
         return NULL;                   /* No buffer */
 
-    if (bstr->offset >= buf->length)
+    if (offset >= buf->length)
         return NULL;
 
-    cp = buf->buffer + bstr->offset;
+    cp = buf->buffer + offset;
 
     /* Find the next line in preparation for the next call */
 
-    nl = (char *)memchr(cp, '\n', buf->length - bstr->offset);
+    nl = (char *)memchr(cp, '\n', buf->length - offset);
 
     if (nl)
         nl++;
 
-    bstr->offset = (int) (nl - buf->buffer);
-    str->line++;
+    offset = (int) (nl - buf->buffer);
+    line++;
 
     return cp;
 }
 
 /* STREAM::close for a buffer stream */
 
-void buffer_stream_delete(
-    STREAM *str)
+BUFFER_STREAM::~BUFFER_STREAM()
 {
-    BUFFER_STREAM  *bstr = (BUFFER_STREAM *) str;
-
-    buffer_free(bstr->buffer);
-    stream_delete(str);
+    buffer_free(buffer);
 }
 
 /* STREAM::rewind for a buffer stream */
 
-void buffer_stream_rewind(
-    STREAM *str)
+void BUFFER_STREAM::rewind()
 {
-    BUFFER_STREAM  *bstr = (BUFFER_STREAM *) str;
-
-    bstr->offset = 0;
-    str->line = 0;
+    offset = 0;
+    line = 0;
 }
 
 /* BUFFER_STREAM vtbl */
 
-STREAM_VTBL     buffer_stream_vtbl = {
-    buffer_stream_delete, buffer_stream_gets, buffer_stream_rewind
-};
+// STREAM_VTBL     buffer_stream_vtbl = {
+//     buffer_stream_delete, buffer_stream_gets, buffer_stream_rewind
+// };
 
-void buffer_stream_construct(
-    BUFFER_STREAM * bstr,
-    BUFFER *buf,
-    char *name)
+BUFFER_STREAM::BUFFER_STREAM(BUFFER *buf,char *name): STREAM(name)
 {
-    bstr->stream.vtbl = &buffer_stream_vtbl;
-
-    bstr->stream.name = (char *)memcheck(strdup(name));
-
-    bstr->buffer = buffer_clone(buf);
-    bstr->offset = 0;
-    bstr->stream.line = 0;
+    // name = (char *)memcheck(strdup(name));
+    str_type = TYPE_BUFFER_STREAM;
+    buffer = buffer_clone(buf);
+    offset = 0;
+    line = 0;
 }
 
-void buffer_stream_set_buffer(
-    BUFFER_STREAM * bstr,
-    BUFFER *buf)
+void BUFFER_STREAM::set_buffer(BUFFER *buf)
 {
-    if (bstr->buffer)
-        buffer_free(bstr->buffer);
-    bstr->buffer = buffer_clone(buf);
-    bstr->offset = 0;
+    if (buffer)
+        buffer_free(buffer);
+    buffer = buffer_clone(buf);
+    offset = 0;
 }
 
 /* new_buffer_stream clones the given buffer, gives it the name, */
 /* and creates a BUFFER_STREAM to reference it */
 
-STREAM         *new_buffer_stream(
-    BUFFER *buf,
-    char *name)
-{
-    BUFFER_STREAM  *bstr = (BUFFER_STREAM *)memcheck(malloc(sizeof(BUFFER_STREAM)));
-
-    buffer_stream_construct(bstr, buf, name);
-    return &bstr->stream;
-}
+// BUFFER_STREAM::BUFFER_STREAM(BUFFER *buf, char *name)
+// {
+//     buffer_stream_construct(bstr, buf, name);
+// }
 
 /* *** FILE_STREAM implementation */
 
 /* Implement STREAM::gets for a file stream */
 
-static char    *file_gets(
-    STREAM *str)
+char    *FILE_STREAM::gets()
 {
     int             i,
                     c;
-    FILE_STREAM    *fstr = (FILE_STREAM *) str;
-
-    if (fstr->fp == NULL)
+    if (fp == NULL)
         return NULL;
 
-    if (feof(fstr->fp))
+    if (feof(fp))
         return NULL;
 
     /* Read single characters, end of line when '\n' or '\f' hit */
 
     i = 0;
-    while (c = fgetc(fstr->fp), c != '\n' && c != '\f' && c != EOF) {
+    while (c = fgetc(fp), c != '\n' && c != '\f' && c != EOF) {
         if (c == 0)
             continue;                  /* Don't buffer zeros */
         if (c == '\r')
             continue;                  /* Don't buffer carriage returns either */
         if (i < STREAM_BUFFER_SIZE - 2)
-            fstr->buffer[i++] = c;
+            buffer[i++] = c;
     }
 
-    fstr->buffer[i++] = '\n';          /* Silently transform formfeeds
+    buffer[i++] = '\n';          /* Silently transform formfeeds
                                           into newlines */
-    fstr->buffer[i] = 0;
+    buffer[i] = 0;
 
     if (c == '\n')
-        fstr->stream.line++;           /* Count a line */
+        line++;           /* Count a line */
 
-    return fstr->buffer;
+    return buffer;
 }
 
 /* Implement STREAM::destroy for a file stream */
 
-void file_destroy(
-    STREAM *str)
+FILE_STREAM::~FILE_STREAM()
 {
-    FILE_STREAM    *fstr = (FILE_STREAM *) str;
-
-    fclose(fstr->fp);
-    free(fstr->buffer);
-    stream_delete(str);
+    fclose(fp);
+    delete (buffer);
 }
 
 /* Implement STREAM::rewind for a file stream */
 
-void file_rewind(
-    STREAM *str)
+void FILE_STREAM::rewind()
 {
-    FILE_STREAM    *fstr = (FILE_STREAM *) str;
-
-    rewind(fstr->fp);
-    str->line = 0;
+    ::rewind(fp);
+    line = 0;
 }
 
-static STREAM_VTBL file_stream_vtbl = {
-    file_destroy, file_gets, file_rewind
-};
+// static STREAM_VTBL file_stream_vtbl = {
+//     file_destroy, file_gets, file_rewind
+// };
 
 /* Prepare and open a stream from a file. */
 
-STREAM         *new_file_stream(
-    char *filename)
+FILE_STREAM::FILE_STREAM() : STREAM("")
 {
-    FILE           *fp;
-    FILE_STREAM    *str;
 
+}
+
+bool FILE_STREAM::init(const char *filename)
+{
+    str_type = TYPE_FILE_STREAM;
     fp = fopen(filename, "r");
-    if (fp == NULL)
-        return NULL;
+    if(fp == NULL)
+        return false;
 
-    str = (FILE_STREAM *)memcheck(malloc(sizeof(FILE_STREAM)));
+    // str = (FILE_STREAM *)memcheck(malloc(sizeof(FILE_STREAM)));
 
-    str->stream.vtbl = &file_stream_vtbl;
-    str->stream.name = (char *)memcheck(strdup(filename));
-    str->buffer = (char *)memcheck(malloc(STREAM_BUFFER_SIZE));
-    str->fp = fp;
-    str->stream.line = 0;
+    // str->stream.vtbl = &file_stream_vtbl;
+    name = (char *)memcheck(strdup(filename));
+    buffer = (char *)memcheck(malloc(STREAM_BUFFER_SIZE));
+    line = 0;
+    return true;
 
-    return &str->stream;
+    // return &str->stream;
 }
 
 /* STACK functions */
 
 /* stack_init prepares a stack */
 
-void stack_init(
-    STACK *stack)
+void STACK::stack_init(STREAM *str)
 {
-    stack->top = NULL;                 /* Too simple */
+    top = str;                 /* Too simple */
 }
 
 /* stack_pop removes and deletes the topmost STRAM on the stack */
 
-void stack_pop(
-    STACK *stack)
+void STACK::pop()
 {
-    STREAM         *top = stack->top;
-    STREAM         *next = top->next;
+    STREAM         *_top = top;
 
-    top->vtbl->_delete(top);
-    stack->top = next;
+    top = top->next;
+    delete (top);
 }
 
 /* stack_push pushes a STREAM onto the top of the stack */
 
-void stack_push(
-    STACK *stack,
-    STREAM *str)
+void STACK::push(STREAM *str)
 {
-    str->next = stack->top;
-    stack->top = str;
+    str->next = top;
+    top = str;
 }
 
 /* stack_gets calls vtbl->gets for the topmost stack entry.  When
    topmost streams indicate they're exhausted, they are popped and
    deleted, until the stack is exhausted. */
 
-char           *stack_gets(
-    STACK *stack)
+char *STACK::gets()
 {
     char           *line;
 
-    if (stack->top == NULL)
+    if (top == NULL)
         return NULL;
 
-    while ((line = stack->top->vtbl->gets(stack->top)) == NULL) {
-        stack_pop(stack);
-        if (stack->top == NULL)
+    while ((line = top->gets()) == NULL) {
+        pop();
+        if (top == NULL)
             return NULL;
     }
 

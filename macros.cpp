@@ -30,38 +30,29 @@
    exhausted.  The unique behavior is to unwind any stacked
    conditionals.  This allows a nested .MEXIT to work.  */
 
-void macro_stream_delete(
-    STREAM *str)
+MACRO_STREAM::~MACRO_STREAM()
 {
-    MACRO_STREAM   *mstr = (MACRO_STREAM *) str;
+    // MACRO_STREAM   *mstr = (MACRO_STREAM *) str;
 
-    pop_cond(mstr->cond);
-    buffer_stream_delete(str);
+    pop_cond(cond);
 }
 
-STREAM_VTBL     macro_stream_vtbl = {
-    macro_stream_delete, buffer_stream_gets, buffer_stream_rewind
-};
+// STREAM_VTBL     macro_stream_vtbl = {
+//     macro_stream_delete, buffer_stream_gets, buffer_stream_rewind
+// };
 
-STREAM         *new_macro_stream(
-    STREAM *refstr,
-    BUFFER *buf,
-    MACRO *mac,
-    ARG *args)
+MACRO_STREAM::MACRO_STREAM(STREAM *refstr, BUFFER *buf, MACRO *mac, ARG *args) : BUFFER_STREAM(buf, ""), nargs(0), cond(0)
 {
-    MACRO_STREAM   *mstr = (MACRO_STREAM *)memcheck(malloc(sizeof(MACRO_STREAM))); {
-        char           *name = (char *)memcheck(malloc(strlen(refstr->name) + 32));
+    str_type = TYPE_MACRO_STREAM;
 
-        sprintf(name, "%s:%d->%s", refstr->name, refstr->line, mac->sym.label);
-        buffer_stream_construct(&mstr->bstr, buf, name);
-        free(name);
-    }
+    free(name);
+    char           *name = (char *)memcheck(malloc(strlen(refstr->name) + 32));
+    sprintf(name, "%s:%d->%s", refstr->name, refstr->line, mac->sym->label);
 
-    mstr->bstr.stream.vtbl = &macro_stream_vtbl;
+    // mstr->bstr.stream.vtbl = &macro_stream_vtbl;
     /* Count the args and save their number */
-    for (mstr->nargs = 0; args; args = args->next, mstr->nargs++) ;
-    mstr->cond = last_cond;
-    return &mstr->bstr.stream;
+    for (nargs = 0; args; args = args->next, nargs++) ;
+    cond = last_cond;
 }
 
 /* read_body fetches the body of .MACRO, .REPT, .IRP, or .IRPC into a
@@ -86,7 +77,7 @@ void read_body(
         char           *nextline;
         char           *cp;
 
-        nextline = stack_gets(stack);  /* Now read the line */
+        nextline = stack->gets();  /* Now read the line */
         if (nextline == NULL) {        /* End of file. */
             report(stack->top, "Macro body not closed\n");
             break;
@@ -100,7 +91,7 @@ void read_body(
         op = get_op(nextline, &cp);
 
         if (op == NULL) {              /* Not a pseudo-op */
-            buffer_append_line(gb, nextline);
+            gb->buffer_append_line(nextline);
             continue;
         }
         if (op->section->type == SECTION_PSEUDO) {
@@ -129,7 +120,7 @@ void read_body(
                 return;                /* All done. */
         }
 
-        buffer_append_line(gb, nextline);
+        gb->buffer_append_line(nextline);
     }
 }
 
@@ -137,13 +128,11 @@ void read_body(
    I used this for debugging; it's not called at all right now, but
    I hate to delete good code. */
 
-void dumpmacro(
-    MACRO *mac,
-    FILE *fp)
+void dumpmacro(MACRO *mac, FILE *fp)
 {
     ARG            *arg;
 
-    fprintf(fp, ".MACRO %s ", mac->sym.label);
+    fprintf(fp, ".MACRO %s ", mac->sym->label);
 
     for (arg = mac->args; arg != NULL; arg = arg->next) {
         fputs(arg->label, fp);
@@ -184,19 +173,19 @@ MACRO          *defmacro(
     mac = (MACRO *) macro_st.lookup_sym(label);
     if (mac) {
         /* Remove from the symbol table... */
-        macro_st.remove_sym(&mac->sym);
-        free_macro(mac);
+        macro_st.remove_sym(mac->sym);
+       delete (mac);
     }
 
-    mac = new_macro(label);
+    mac = new MACRO(label);
 
-    macro_st.add_table(&mac->sym);
+    macro_st.add_table(mac->sym);
 
     argtail = &mac->args;
     cp = skipdelim(cp);
 
     while (!EOL(*cp)) {
-        arg = new_arg();
+        arg = new ARG();
         arg->locsym = *cp == '?';
         if (arg->locsym) /* special argument flag? */
             cp++;
@@ -209,7 +198,7 @@ MACRO          *defmacro(
 #if 0
             report(str, "Illegal macro argument\n");
             remove_sym(&mac->sym, &macro_st);
-            free_macro(mac);
+            delete (mac);
             return NULL;
 #endif
         }
@@ -220,8 +209,8 @@ MACRO          *defmacro(
             arg->value = getstring(cp + 1, &cp);
             if (arg->value == NULL) {
                 report(stack->top, "Illegal macro argument\n");
-                macro_st.remove_sym(&mac->sym);
-                free_macro(mac);
+                macro_st.remove_sym(mac->sym);
+                delete (mac);
                 return NULL;
             }
         }
@@ -238,14 +227,14 @@ MACRO          *defmacro(
         BUFFER         *gb;
         int             levelmod = 0;
 
-        gb = new_buffer();
+        gb = new BUFFER();
 
         if (!called && !list_md) {
             list_level--;
             levelmod = 1;
         }
 
-        read_body(stack, gb, mac->sym.label, called);
+        read_body(stack, gb, mac->sym->label, called);
 
         list_level += levelmod;
 
@@ -262,15 +251,26 @@ MACRO          *defmacro(
 
 /* Allocate a new ARG */
 
-ARG  *new_arg(void)
+ARG::ARG(void)
 {
-    ARG            *arg = (ARG *)memcheck(malloc(sizeof(ARG)));
+    // ARG            *arg = (ARG *)memcheck(malloc(sizeof(ARG)));
 
-    arg->locsym = 0;
-    arg->value = NULL;
-    arg->next = NULL;
-    arg->label = NULL;
-    return arg;
+    locsym = 0;
+    value = NULL;
+    next = NULL;
+    label = NULL;
+    // return arg;
+}
+
+ARG::~ARG()
+{
+    if (label) {
+        free(label);
+    }
+    if (value) {
+        free(value);
+    }
+
 }
 
 
@@ -282,15 +282,7 @@ static void free_args(ARG *arg)
 
     while (arg) {
         next = arg->next;
-        if (arg->label) {
-            free(arg->label);
-            arg->label = NULL;
-        }
-        if (arg->value) {
-            free(arg->value);
-            arg->value = NULL;
-        }
-        free(arg);
+        delete (arg);
         arg = next;
     }
 }
@@ -299,9 +291,7 @@ static void free_args(ARG *arg)
 /* find_arg - looks for an arg with the given name in the given
    argument list */
 
-static ARG     *find_arg(
-    ARG *arg,
-    char *name)
+static ARG *find_arg(ARG *arg, char *name)
 {
     for (; arg != NULL; arg = arg->next)
         if (strcmp(arg->label, name) == 0)
@@ -313,9 +303,7 @@ static ARG     *find_arg(
 /* subst_args - given a BUFFER and a list of args, generate a new
    BUFFER with argument replacement having taken place. */
 
-BUFFER         *subst_args(
-    BUFFER *text,
-    ARG *args)
+BUFFER *subst_args(BUFFER *text, ARG *args)
 {
     char           *in;
     char           *begin;
@@ -323,7 +311,7 @@ BUFFER         *subst_args(
     char           *label;
     ARG            *arg;
 
-    gb = new_buffer();
+    gb = new BUFFER();
 
     /* Blindly look for argument symbols in the input. */
     /* Don't worry about quotes or comments. */
@@ -344,9 +332,9 @@ BUFFER         *subst_args(
                         next++;
 
                     /* Copy prior characters */
-                    buffer_appendn(gb, begin, (int) (in - begin));
+                    gb->buffer_appendn(begin, (int) (in - begin));
                     /* Copy replacement string */
-                    buffer_append_line(gb, arg->value);
+                    gb->buffer_append_line(arg->value);
                     in = begin = next;
                     --in;              /* prepare for subsequent increment */
                 }
@@ -359,7 +347,7 @@ BUFFER         *subst_args(
     }
 
     /* Append the rest of the text */
-    buffer_appendn(gb, begin, (int) (in - begin));
+    gb->buffer_appendn(begin, (int) (in - begin));
 
     return gb;                         /* Done. */
 }
@@ -404,7 +392,7 @@ STREAM         *expandmacro(
                    *args,
                    *macarg;
     char           *label;
-    STREAM         *str;
+    MACRO_STREAM         *str;
     BUFFER         *buf;
 
     args = NULL;
@@ -426,7 +414,7 @@ STREAM         *expandmacro(
                 return NULL;
             }
 
-            arg = new_arg();
+            arg = new ARG();
             arg->label = label;
             nextcp = skipwhite(nextcp + 1);
             arg->value = getstring(nextcp, &nextcp);
@@ -444,7 +432,7 @@ STREAM         *expandmacro(
             if (macarg == NULL)
                 break;                 /* Don't pick up any more arguments. */
 
-            arg = new_arg();
+            arg = new ARG();
             arg->label = (char *)memcheck(strdup(macarg->label));       /* Copy the name */
             arg->value = getstring(cp, &nextcp);
         }
@@ -469,7 +457,7 @@ STREAM         *expandmacro(
         for (macarg = mac->args; macarg != NULL; macarg = macarg->next) {
             arg = find_arg(args, macarg->label);
             if (arg == NULL) {
-                arg = new_arg();
+                arg = new ARG();
                 arg->label = (char *)memcheck(strdup(macarg->label));
                 if (macarg->locsym) {
                     char            temp[32];
@@ -492,7 +480,7 @@ STREAM         *expandmacro(
 
     buf = subst_args(mac->text, args);
 
-    str = new_macro_stream(refstr, buf, mac, args);
+    str = new MACRO_STREAM(refstr, buf, mac, args);
 
     free_args(args);
     buffer_free(buf);
@@ -520,30 +508,25 @@ static void dump_all_macros(
 
 /* Allocate a new macro */
 
-MACRO          *new_macro(
-    char *label)
+MACRO::MACRO(char *label)
 {
-    MACRO          *mac = (MACRO *)memcheck(malloc(sizeof(MACRO)));
-
-    mac->sym.flags = 0;
-    mac->sym.label = label;
-    mac->sym.stmtno = stmtno;
-    mac->sym.next = NULL;
-    mac->sym.section = &macro_section;
-    mac->sym.value = 0;
-    mac->args = NULL;
-    mac->text = NULL;
-
-    return mac;
+    sym = new SYMBOL(label);
+    sym->flags = 0;
+    // sym.label = label;
+    sym->stmtno = stmtno;
+    sym->next = NULL;
+    sym->section = &macro_section;
+    sym->value = 0;
+    args = NULL;
+    text = NULL;
 }
 
 /* free a macro, it's args, it's text, etc. */
-void free_macro(
-    MACRO *mac)
+MACRO::~MACRO()
 {
-    if (mac->text) {
-        free(mac->text);
+    if (text) {
+        free(text);
     }
-    free_args(mac->args);
-    delete (&mac->sym);
+    free_args(args);
+    // delete (sym);
 }

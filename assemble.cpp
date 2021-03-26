@@ -43,7 +43,7 @@ static int assemble(
     int             local;      /* Whether a label is a local label or
                                    not */
 
-    line = stack_gets(stack);
+    line = stack->gets();
     if (line == NULL)
         return -1;                     /* Return code for EOF. */
 
@@ -251,7 +251,7 @@ static int assemble(
 
             macstr = expandmacro(stack->top, (MACRO *) op, ncp);
 
-            stack_push(stack, macstr); /* Push macro expansion
+            stack->push(macstr); /* Push macro expansion
                                           onto input stream */
 
             return 1;
@@ -373,7 +373,7 @@ static int assemble(
 
                         /* Walk up the stream stack to find the
                            topmost macro stream */
-                        for (str = stack->top; str != NULL && str->vtbl != &macro_stream_vtbl;
+                        for (str = stack->top; str != NULL && str->str_type != TYPE_MACRO_STREAM;
                              str = str->next) ;
 
                         if (!str) {
@@ -440,15 +440,15 @@ static int assemble(
                 case P_INCLUDE:
                     {
                         char           *name = getstring(cp, &cp);
-                        STREAM         *incl;
+                        FILE_STREAM         *incl;
 
                         if (name == NULL) {
                             report(stack->top, "Bad .INCLUDE file name\n");
                             return 0;
                         }
 
-                        incl = new_file_stream(name);
-                        if (incl == NULL) {
+                        incl = new FILE_STREAM();
+                        if (!incl->init(name)) {
                             report(stack->top, "Unable to open .INCLUDE file %s\n", name);
                             free(name);
                             return 0;
@@ -456,7 +456,7 @@ static int assemble(
 
                         free(name);
 
-                        stack_push(stack, incl);
+                        stack->push(incl);
 
                         return 1;
                     }
@@ -477,7 +477,7 @@ static int assemble(
                             cp += strcspn(cp, quote);
                             if (*cp == quote[0])
                                 break; /* Found closing quote */
-                            cp = stack_gets(stack);     /* Read next input line */
+                            cp = stack->gets();     /* Read next input line */
                             if (cp == NULL)
                                 break; /* EOF */
                         }
@@ -486,19 +486,19 @@ static int assemble(
 
                 case P_IRP:
                     {
-                        STREAM         *str = expand_irp(stack, cp);
+                        IRP_STREAM         *str = expand_irp(stack, cp);
 
                         if (str)
-                            stack_push(stack, str);
+                            stack->push((STREAM *)str);
                         return str != NULL;
                     }
 
                 case P_IRPC:
                     {
-                        STREAM         *str = expand_irpc(stack, cp);
+                        IRPC_STREAM         *str = expand_irpc(stack, cp);
 
                         if (str)
-                            stack_push(stack, str);
+                            stack->push((STREAM *)str);
                         return str != NULL;
                     }
 
@@ -537,27 +537,29 @@ static int assemble(
                             /* Find the macro in the list of included
                                macro libraries */
                             macbuf = NULL;
+                            macstr = NULL;
                             for (i = 0; i < nr_mlbs; i++)
                                 if ((macbuf = mlb_entry(mlbs[i], label)) != NULL)
                                     break;
                             if (macbuf != NULL) {
-                                macstr = new_buffer_stream(macbuf, label);
+                                macstr = new BUFFER_STREAM(macbuf, label);
                                 buffer_free(macbuf);
                             } else {
                                 strncpy(macfile, label, sizeof(macfile));
                                 strncat(macfile, ".MAC", sizeof(macfile) - strlen(macfile) - 1);
                                 my_searchenv(macfile, "MCALL", hitfile, sizeof(hitfile));
-                                if (hitfile[0])
-                                    macstr = new_file_stream(hitfile);
-                                else
-                                    macstr = NULL;
+                                if (hitfile[0]) {
+                                    FILE_STREAM * fmacstr = new FILE_STREAM();
+                                    if(fmacstr->init(hitfile))
+                                        macstr = fmacstr;
+                                }
                             }
 
                             if (macstr != NULL) {
                                 for (;;) {
                                     char           *mlabel;
 
-                                    maccp = macstr->vtbl->gets(macstr);
+                                    maccp = macstr->gets();
                                     if (maccp == NULL)
                                         break;
                                     mlabel = get_symbol(maccp, &maccp, NULL);
@@ -572,10 +574,9 @@ static int assemble(
                                 }
 
                                 if (maccp != NULL) {
-                                    STACK           macstack = {
-                                        macstr
-                                    };
-                                    int             savelist = list_level;
+                                    STACK  macstack;
+                                    macstack.stack_init(macstr);
+                                    int    savelist = list_level;
 
                                     saveline = stmtno;
                                     list_level = -1;
@@ -588,7 +589,7 @@ static int assemble(
                                     list_level = savelist;
                                 }
 
-                                macstr->vtbl->_delete(macstr);
+                                delete macstr;
                             } else
                                 report(stack->top, "MACRO %s not found\n", label);
 
@@ -612,24 +613,24 @@ static int assemble(
                         /* It must be the first stream, and it must be */
                         /* a macro, rept, irp, or irpc. */
                         macstr = stack->top;
-                        if (macstr->vtbl != &macro_stream_vtbl && macstr->vtbl != &rept_stream_vtbl
-                            && macstr->vtbl != &irp_stream_vtbl && macstr->vtbl != &irpc_stream_vtbl) {
+                        if (macstr->str_type != TYPE_MACRO_STREAM && macstr->str_type != TYPE_REPT_STREAM
+                            && macstr->str_type != TYPE_IRP_STREAM && macstr->str_type != TYPE_IRPC_STREAM) {
                             report(stack->top, ".MEXIT not within a macro\n");
                             return 0;
                         }
 
                         /* and finally, pop the macro */
-                        stack_pop(stack);
+                        stack->pop();
 
                         return 1;
                     }
 
                 case P_REPT:
                     {
-                        STREAM         *reptstr = expand_rept(stack, cp);
+                        REPT_STREAM *reptstr = expand_rept(stack, cp);
 
                         if (reptstr)
-                            stack_push(stack, reptstr);
+                            stack->push((STREAM *)reptstr);
                         return reptstr != NULL;
                     }
 

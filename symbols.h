@@ -36,7 +36,7 @@ struct SECTION {
 /* Symbol table entries */
 
 struct SYMBOL {
-    SYMBOL(char *label);
+    SYMBOL(char *label = NULL);
     ~SYMBOL();
     char           *label;      /* Symbol name */
     unsigned        value;      /* Symbol value */

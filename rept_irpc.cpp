@@ -20,55 +20,57 @@
 
 /* *** implement REPT_STREAM */
 
-typedef struct rept_stream {
-    BUFFER_STREAM   bstr;
-    int             count;      /* The current repeat countdown */
-    int             savecond;   /* conditional stack level at time of
+struct REPT_STREAM : BUFFER_STREAM {
+    REPT_STREAM(BUFFER *buf, char *name) : BUFFER_STREAM(buf, name), count(0), savecond(0) { str_type = TYPE_REPT_STREAM; };
+    virtual ~REPT_STREAM() override;
+    // BUFFER_STREAM   bstr;
+    int     count;      /* The current repeat countdown */
+    int     savecond;   /* conditional stack level at time of
                                    expansion */
-} REPT_STREAM;
+    char    *gets() override;
+    // void   _delete() override;
+    // void    rewind() override;
+
+};
 
 /* rept_stream_gets gets a line from a repeat stream.  At the end of
    each count, the coutdown is decreated and the stream is reset to
    it's beginning. */
 
-char           *rept_stream_gets(
-    STREAM *str)
+char *REPT_STREAM::gets()
 {
-    REPT_STREAM    *rstr = (REPT_STREAM *) str;
-    char           *cp;
+    char  *cp;
 
     for (;;) {
-        if ((cp = buffer_stream_gets(str)) != NULL)
+        if ((cp = BUFFER_STREAM::gets()) != NULL)
             return cp;
 
-        if (--rstr->count <= 0)
+        if (--count <= 0)
             return NULL;
 
-        buffer_stream_rewind(str);
+        rewind();
     }
 }
 
 /* rept_stream_delete unwinds nested conditionals like .MEXIT does. */
 
-void rept_stream_delete(
-    STREAM *str)
+// void rept_stream_delete(STREAM *str)
+REPT_STREAM::~REPT_STREAM()
 {
-    REPT_STREAM    *rstr = (REPT_STREAM *) str;
+    // REPT_STREAM    *rstr = (REPT_STREAM *) str;
 
-    pop_cond(rstr->savecond);          /* complete unterminated
-                                          conditionals */
-    buffer_stream_delete(&rstr->bstr.stream);
+    pop_cond(savecond);          /* complete unterminated  conditionals */
 }
 
 /* The VTBL */
 
-STREAM_VTBL     rept_stream_vtbl = {
-    rept_stream_delete, rept_stream_gets, buffer_stream_rewind
-};
+// STREAM_VTBL     rept_stream_vtbl = {
+//     rept_stream_delete, rept_stream_gets, buffer_stream_rewind
+// };
 
 /* expand_rept is called when a .REPT is encountered in the input. */
 
-STREAM         *expand_rept(
+REPT_STREAM   *expand_rept(
     STACK *stack,
     char *cp)
 {
@@ -84,7 +86,7 @@ STREAM         *expand_rept(
         return NULL;
     }
 
-    gb = new_buffer();
+    gb = new BUFFER();
 
     levelmod = 0;
     if (!list_md) {
@@ -96,100 +98,99 @@ STREAM         *expand_rept(
 
     list_level += levelmod;
 
-    rstr = (REPT_STREAM *)memcheck(malloc(sizeof(REPT_STREAM))); {
-        char           *name = (char *)memcheck(malloc(strlen(stack->top->name) + 32));
+    char           *name = (char *)memcheck(malloc(strlen(stack->top->name) + 32));
 
-        sprintf(name, "%s:%d->.REPT", stack->top->name, stack->top->line);
-        buffer_stream_construct(&rstr->bstr, gb, name);
-        free(name);
-    }
+    sprintf(name, "%s:%d->.REPT", stack->top->name, stack->top->line);
+    rstr = new REPT_STREAM(gb, name);
+    free(name);
+    
 
     rstr->count = value->data.lit;
-    rstr->bstr.stream.vtbl = &rept_stream_vtbl;
+    // rstr->bstr.stream.vtbl = &rept_stream_vtbl;
     rstr->savecond = last_cond;
 
     buffer_free(gb);
     delete (value);
 
-    return &rstr->bstr.stream;
+    return rstr;
 }
 
 /* *** implement IRP_STREAM */
 
-typedef struct irp_stream {
-    BUFFER_STREAM   bstr;
+struct IRP_STREAM : public BUFFER_STREAM{
+    IRP_STREAM(BUFFER *buf, char *name) : BUFFER_STREAM(buf, name), offset(0), body(0), savecond(0) { str_type = TYPE_IRP_STREAM; };
+    virtual ~IRP_STREAM() override;
+    // BUFFER_STREAM   bstr;
     char           *label;      /* The substitution label */
     char           *items;      /* The substitution items (in source code
                                    format) */
     int             offset;     /* Current offset into "items" */
     BUFFER         *body;       /* Original body */
     int             savecond;   /* Saved conditional level */
-} IRP_STREAM;
+
+    char           *gets() override;
+    // void            _delete() override;
+    // void            rewind() override;
+
+};
 
 /* irp_stream_gets expands the IRP as the stream is read. */
 /* Each time an iteration is exhausted, the next iteration is
    generated. */
 
-char           *irp_stream_gets(
-    STREAM *str)
+char  *IRP_STREAM::gets()
 {
-    IRP_STREAM     *istr = (IRP_STREAM *) str;
     char           *cp;
     BUFFER         *buf;
     ARG            *arg;
 
     for (;;) {
-        if ((cp = buffer_stream_gets(str)) != NULL)
+        if ((cp = BUFFER_STREAM::gets()) != NULL)
             return cp;
 
-        cp = istr->items + istr->offset;
+        cp = items + offset;
 
         if (!*cp)
             return NULL;               /* No more items.  EOF. */
 
-        arg = new_arg();
+        arg = new ARG();
         arg->next = NULL;
         arg->locsym = 0;
-        arg->label = istr->label;
+        arg->label = label;
         arg->value = getstring(cp, &cp);
         cp = skipdelim(cp);
-        istr->offset = (int) (cp - istr->items);
+        offset = (int) (cp - items);
 
-        eval_arg(str, arg);
-        buf = subst_args(istr->body, arg);
+        eval_arg(this, arg);
+        buf = subst_args(body, arg);
 
         free(arg->value);
         free(arg);
-        buffer_stream_set_buffer(&istr->bstr, buf);
+        set_buffer(buf);
         buffer_free(buf);
     }
 }
 
 /* irp_stream_delete - also pops the conditional stack */
 
-void irp_stream_delete(
-    STREAM *str)
+IRP_STREAM::~IRP_STREAM()
 {
-    IRP_STREAM     *istr = (IRP_STREAM *) str;
+    // IRP_STREAM     *istr = (IRP_STREAM *) str;
 
-    pop_cond(istr->savecond);          /* complete unterminated
-                                          conditionals */
+    pop_cond(savecond);          /* complete unterminated conditionals */
 
-    buffer_free(istr->body);
-    free(istr->items);
-    free(istr->label);
-    buffer_stream_delete(str);
+    buffer_free(body);
+    free(items);
+    free(label);
 }
 
-STREAM_VTBL     irp_stream_vtbl = {
-    irp_stream_delete, irp_stream_gets, buffer_stream_rewind
-};
+// STREAM_VTBL     irp_stream_vtbl = {
+//     irp_stream_delete, irp_stream_gets, buffer_stream_rewind
+// };
 
 /* expand_irp is called when a .IRP is encountered in the input. */
 
-STREAM         *expand_irp(
-    STACK *stack,
-    char *cp)
+IRP_STREAM  *expand_irp(STACK *stack, char *cp)
 {
     char           *label,
                    *items;
@@ -212,7 +213,7 @@ STREAM         *expand_irp(
         return NULL;
     }
 
-    gb = new_buffer();
+    gb = new BUFFER();
 
     levelmod = 0;
     if (!list_md) {
@@ -224,15 +225,13 @@ STREAM         *expand_irp(
 
     list_level += levelmod;
 
-    str = (IRP_STREAM *)memcheck(malloc(sizeof(IRP_STREAM))); {
-        char           *name = (char *)memcheck(malloc(strlen(stack->top->name) + 32));
+    char           *name = (char *)memcheck(malloc(strlen(stack->top->name) + 32));
 
-        sprintf(name, "%s:%d->.IRP", stack->top->name, stack->top->line);
-        buffer_stream_construct(&str->bstr, NULL, name);
-        free(name);
-    }
+    sprintf(name, "%s:%d->.IRP", stack->top->name, stack->top->line);
+    str = new IRP_STREAM(NULL, name);
+    free(name);
 
-    str->bstr.stream.vtbl = &irp_stream_vtbl;
+    // str->bstr.stream.vtbl = &irp_stream_vtbl;
 
     str->body = gb;
     str->items = items;
@@ -240,84 +239,84 @@ STREAM         *expand_irp(
     str->label = label;
     str->savecond = last_cond;
 
-    return &str->bstr.stream;
+    return str;
 }
 
 
 /* *** implement IRPC_STREAM */
 
-typedef struct irpc_stream {
-    BUFFER_STREAM   bstr;
+struct IRPC_STREAM : public BUFFER_STREAM {
+    IRPC_STREAM(BUFFER *buf, char *name) : BUFFER_STREAM(buf, name), offset(0), body(0), savecond(0) { str_type = TYPE_IRPC_STREAM; };
+    virtual ~IRPC_STREAM() override;
+// BUFFER_STREAM   bstr;
     char           *label;      /* The substitution label */
     char           *items;      /* The substitution items (in source code
                                    format) */
     int             offset;     /* Current offset in "items" */
     BUFFER         *body;       /* Original body */
     int             savecond;   /* conditional stack at invocation */
-} IRPC_STREAM;
+
+    char           *gets() override;
+    // void            _delete() override;
+    // void            rewind() override;
+};
 
 /* irpc_stream_gets - same comments apply as with irp_stream_gets, but
    the substitution is character-by-character */
 
-char           *irpc_stream_gets(
-    STREAM *str)
+char           *IRPC_STREAM::gets()
 {
-    IRPC_STREAM    *istr = (IRPC_STREAM *) str;
+    // IRPC_STREAM    *istr = (IRPC_STREAM *) str;
     char           *cp;
     BUFFER         *buf;
     ARG            *arg;
 
     for (;;) {
-        if ((cp = buffer_stream_gets(str)) != NULL)
+        if ((cp = BUFFER_STREAM::gets()) != NULL)
             return cp;
 
-        cp = istr->items + istr->offset;
+        cp = items + offset;
 
         if (!*cp)
             return NULL;               /* No more items.  EOF. */
 
-        arg = new_arg();
+        arg = new ARG();
         arg->next = NULL;
         arg->locsym = 0;
-        arg->label = istr->label;
+        arg->label = label;
         arg->value = (char *)memcheck(malloc(2));
         arg->value[0] = *cp++;
         arg->value[1] = 0;
-        istr->offset = (int) (cp - istr->items);
+        offset = (int) (cp - items);
 
-        buf = subst_args(istr->body, arg);
+        buf = subst_args(body, arg);
 
         free(arg->value);
-        free(arg);
-        buffer_stream_set_buffer(&istr->bstr, buf);
+        delete (arg);
+        set_buffer(buf);
         buffer_free(buf);
     }
 }
 
 /* irpc_stream_delete - also pops contidionals */
 
-void irpc_stream_delete(
-    STREAM *str)
+IRPC_STREAM::~IRPC_STREAM()
 {
-    IRPC_STREAM    *istr = (IRPC_STREAM *) str;
+    // IRPC_STREAM    *istr = (IRPC_STREAM *) str;
 
-    pop_cond(istr->savecond);          /* complete unterminated
-                                          conditionals */
-    buffer_free(istr->body);
-    free(istr->items);
-    free(istr->label);
-    buffer_stream_delete(str);
+    pop_cond(savecond);          /* complete unterminated  conditionals */
+    buffer_free(body);
+    free(items);
+    free(label);
 }
 
-STREAM_VTBL     irpc_stream_vtbl = {
-    irpc_stream_delete, irpc_stream_gets, buffer_stream_rewind
-};
+// STREAM_VTBL     irpc_stream_vtbl = {
+//     irpc_stream_delete, irpc_stream_gets, buffer_stream_rewind
+// };
 
 /* expand_irpc - called when .IRPC is encountered in the input */
 
-STREAM         *expand_irpc(
-    STACK *stack,
-    char *cp)
+IRPC_STREAM *expand_irpc(STACK *stack, char *cp)
 {
     char           *label,
                    *items;
@@ -340,7 +339,7 @@ STREAM         *expand_irpc(
         return NULL;
     }
 
-    gb = new_buffer();
+    gb = new BUFFER();
 
     levelmod = 0;
     if (!list_md) {
@@ -352,20 +351,20 @@ STREAM         *expand_irpc(
 
     list_level += levelmod;
 
-    str = (IRPC_STREAM *)memcheck(malloc(sizeof(IRPC_STREAM))); {
+    // str = (IRPC_STREAM *)memcheck(malloc(sizeof(IRPC_STREAM))); {
         char           *name = (char *)memcheck(malloc(strlen(stack->top->name) + 32));
 
         sprintf(name, "%s:%d->.IRPC", stack->top->name, stack->top->line);
-        buffer_stream_construct(&str->bstr, NULL, name);
+        str = new IRPC_STREAM(NULL, name);
         free(name);
-    }
+    // }
 
-    str->bstr.stream.vtbl = &irpc_stream_vtbl;
+    // str->bstr.stream.vtbl = &irpc_stream_vtbl;
     str->body = gb;
     str->items = items;
     str->offset = 0;
     str->label = label;
     str->savecond = last_cond;
 
-    return &str->bstr.stream;
+    return str;
 }
