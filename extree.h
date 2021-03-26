@@ -43,7 +43,7 @@ EX_TREE        *ex_err(EX_TREE *tp, char *cp);
 
 class EX_TREE {
   public:
-    EX_TREE() {};
+    EX_TREE(ex_type tp) : type(tp) {};
     EX_TREE(unsigned value) {
         type = EX_LIT;
         data.lit = value;
@@ -51,7 +51,7 @@ class EX_TREE {
     EX_TREE(const char *label, SECTION *section, unsigned value);
 
     ~EX_TREE(); //{ free_tree(); };
-    enum ex_type type;
+    ex_type type;
 
     char           *cp;         /* points to end of parsed expression */
 

@@ -63,21 +63,17 @@ DAMAGE.
 
 /* Program sections: */
 
+#define USER 1			/* user-defined */
+#define SYSTEM 2		/* A system symbol (like "."; value is an enum) */
+#define INSTRUCTION 3	/* An instruction code (like "MOV"; value is an enum) */
+#define PSEUDO 4		/* A pseudo-op (.PSECT, .TITLE, .MACRO, .IF; value is an enum) */
+#define REGISTER 5		/* Symbol is a register (value 0=$0, value 1=$1, ... $7) */
+#define USERMACRO 6		/* Symbol is a user macro */
+
 typedef struct section
 {
 	char *label;		/* Section name */
 	unsigned type;		/* Section type */
-#define USER 1			/* user-defined */
-#define SYSTEM 2		/* A system symbol (like "."; value is an
-						   enum) */
-#define INSTRUCTION 3	/* An instruction code (like "MOV"; value is
-						   an enum) */
-#define PSEUDO 4		/* A pseudo-op (.PSECT, .TITLE, .MACRO, .IF;
-						   value is an enum) */
-#define REGISTER 5		/* Symbol is a register (value 0=$0, value
-						   1=$1, ... $7) */
-#define USERMACRO 6		/* Symbol is a user macro */
-
 	unsigned flags;		/* Flags, defined in object.h */
 	unsigned pc;		/* Current offset in the section */
 	unsigned size;		/* Current section size */
@@ -85,24 +81,23 @@ typedef struct section
 } SECTION;
 
 /* Symbol table entries */
-
-typedef struct symbol
-{
-	char *label;		/* Symbol name */
-	unsigned value;		/* Symbol value */
-	int stmtno;			/* Statement number of symbol's definition */
-	unsigned flags;		/* Symbol flags */
 #define PERMANENT 1		/* Symbol may not be redefined */
 #define GLOBAL 2		/* Symbol is global */
 #define WEAK 4			/* Symbol definition is weak */
-#define DEFINITION 8	/* Symbol is a global definition, not
-						   reference */
+#define DEFINITION 8	/* Symbol is a global definition, not reference */
 #define UNDEFINED 16	/* Symbol is a phony, undefined */
 #define LOCAL 32		/* Set if this is a local label (i.e. 10$) */
 
-	SECTION *section;	/* Section in which this symbol is defined */
-	struct symbol *next;	/* Next symbol with the same hash value */
-} SYMBOL;
+// typedef struct symbol
+// {
+// 	char *label;		/* Symbol name */
+// 	unsigned value;		/* Symbol value */
+// 	int stmtno;			/* Statement number of symbol's definition */
+// 	unsigned flags;		/* Symbol flags */
+
+// 	SECTION *section;	/* Section in which this symbol is defined */
+// 	struct symbol *next;	/* Next symbol with the same hash value */
+// } SYMBOL;
 
 /* Arguments given to macros or .IRP/.IRPC blocks */
 

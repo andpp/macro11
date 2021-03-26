@@ -117,7 +117,7 @@ static int assemble(
                 ncp++;
             }
 
-            sym = add_sym(label, DOT, flag, current_pc->section, &symbol_st);
+            sym = symbol_st.add_sym(label, DOT, flag, current_pc->section);
             cp = ncp;
 
             if (sym == NULL)
@@ -217,9 +217,9 @@ static int assemble(
 
             /* regular symbols */
             if (value->type == EX_LIT) {
-                sym = add_sym(label, value->data.lit, flags, &absolute_section, &symbol_st);
+                sym = symbol_st.add_sym(label, value->data.lit, flags, &absolute_section);
             } else if (value->type == EX_SYM || value->type == EX_TEMP_SYM) {
-                sym = add_sym(label, value->data.symbol->value, flags, value->data.symbol->section, &symbol_st);
+                sym = symbol_st.add_sym(label, value->data.symbol->value, flags, value->data.symbol->section);
             } else {
                 report(stack->top, "Complex expression cannot be assigned " "to a symbol\n");
 
@@ -227,7 +227,7 @@ static int assemble(
                     /* This may work better in pass 2 - something in
                        RT-11 monitor needs the symbol to apear to be
                        defined even if I can't resolve its value. */
-                    sym = add_sym(label, 0, SYMBOLFLAG_UNDEFINED, &absolute_section, &symbol_st);
+                    sym = symbol_st.add_sym(label, 0, SYMBOLFLAG_UNDEFINED, &absolute_section);
                 } else
                     sym = NULL;
             }
@@ -243,7 +243,7 @@ static int assemble(
 
         /* Try to resolve macro */
 
-        op = lookup_sym(label, &macro_st);
+        op = macro_st.lookup_sym(label);
         if (op && op->stmtno < stmtno) {
             STREAM         *macstr;
 
@@ -258,7 +258,7 @@ static int assemble(
         }
 
         /* Try to resolve instruction or pseudo */
-        op = lookup_sym(label, &system_st);
+        op = system_st.lookup_sym(label);
         if (op) {
             cp = ncp;
 
@@ -384,8 +384,7 @@ static int assemble(
 
                         mstr = (MACRO_STREAM *) str;
 
-                        add_sym(label, mstr->nargs, SYMBOLFLAG_DEFINITION | local, &absolute_section,
-                                &symbol_st);
+                        symbol_st.add_sym(label, mstr->nargs, SYMBOLFLAG_DEFINITION | local, &absolute_section);
                         free(label);
                         return 1;
                     }
@@ -406,8 +405,7 @@ static int assemble(
 
                         string = getstring(cp, &cp);
 
-                        add_sym(label, strlen(string), SYMBOLFLAG_DEFINITION | local, &absolute_section,
-                                &symbol_st);
+                        symbol_st.add_sym(label, strlen(string), SYMBOLFLAG_DEFINITION | local, &absolute_section);
                         free(label);
                         free(string);
                         return 1;
@@ -432,7 +430,7 @@ static int assemble(
                             return 0;
                         }
 
-                        add_sym(label, mode.type, SYMBOLFLAG_DEFINITION | local, &absolute_section, &symbol_st);
+                        symbol_st.add_sym(label, mode.type, SYMBOLFLAG_DEFINITION | local, &absolute_section);
                         free_addr_mode(&mode);
                         free(label);
 
@@ -528,7 +526,7 @@ static int assemble(
                             }
 
                             /* See if that macro's already defined */
-                            if (lookup_sym(label, &macro_st)) {
+                            if (macro_st.lookup_sym(label)) {
                                 free(label);    /* Macro already
                                                    registered.  No
                                                    prob. */
@@ -565,7 +563,7 @@ static int assemble(
                                     mlabel = get_symbol(maccp, &maccp, NULL);
                                     if (mlabel == NULL)
                                         continue;
-                                    op = lookup_sym(mlabel, &system_st);
+                                    op = system_st.lookup_sym(mlabel);
                                     free(mlabel);
                                     if (op == NULL)
                                         continue;
@@ -891,7 +889,7 @@ static int assemble(
                         if (label == NULL)
                             label = (char *)memcheck(strdup(""));       /* Allow blank */
 
-                        sectsym = lookup_sym(label, &section_st);
+                        sectsym = section_st.lookup_sym(label);
                         if (sectsym) {
                             sect = sectsym->section;
                             free(label);
@@ -903,7 +901,7 @@ static int assemble(
                             sect->size = 0;
                             sect->type = SECTION_USER;
                             sections[sector++] = sect;
-                            sectsym = add_sym(label, 0, 0, sect, &section_st);
+                            sectsym = section_st.add_sym(label, 0, 0, sect);
                         }
 
                         if (op->value == P_PSECT)
@@ -964,13 +962,13 @@ static int assemble(
                                 return 0;
                             }
 
-                            sym = lookup_sym(label, &symbol_st);
+                            sym = symbol_st.lookup_sym(label);
                             if (sym) {
                                 sym->flags |= SYMBOLFLAG_GLOBAL | (op->value == P_WEAK ? SYMBOLFLAG_WEAK : 0);
                             } else
-                                sym = add_sym(label, 0,
+                                sym = symbol_st.add_sym(label, 0,
                                               SYMBOLFLAG_GLOBAL | (op->value == P_WEAK ? SYMBOLFLAG_WEAK : 0),
-                                              &absolute_section, &symbol_st);
+                                              &absolute_section);
 
                             free(label);
                             cp = skipdelim(ncp);

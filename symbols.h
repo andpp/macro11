@@ -7,17 +7,25 @@
 
 #define SYMMAX_MAX 64
 
-
-/* Program sections: */
-struct SECTION {
-    char           *label;      /* Section name */
-    unsigned        type;       /* Section type */
 #define SECTION_USER 1          /* user-defined */
 #define SECTION_SYSTEM 2        /* A system symbol (like "."; value is an enum) */
 #define SECTION_INSTRUCTION 3   /* An instruction code (like "MOV"; value is an enum) */
 #define SECTION_PSEUDO 4        /* A pseudo-op (.PSECT, .TITLE, .MACRO, .IF; value is an enum) */
 #define SECTION_REGISTER 5      /* Symbol is a register (value 0=$0, value 1=$1, ... $7) */
 #define SECTION_USERMACRO 6     /* Symbol is a user macro */
+
+#define SYMBOLFLAG_PERMANENT 1  /* Symbol may not be redefined */
+#define SYMBOLFLAG_GLOBAL 2     /* Symbol is global */
+#define SYMBOLFLAG_WEAK 4       /* Symbol definition is weak */
+#define SYMBOLFLAG_DEFINITION 8 /* Symbol is a global definition, not reference */
+#define SYMBOLFLAG_UNDEFINED 16 /* Symbol is a phony, undefined */
+#define SYMBOLFLAG_LOCAL 32     /* Set if this is a local label (i.e. 10$) */
+
+
+/* Program sections: */
+struct SECTION {
+    char           *label;      /* Section name */
+    unsigned        type;       /* Section type */
 
     unsigned        flags;      /* Flags, defined in object.h */
     unsigned        pc;         /* Current offset in the section */
@@ -28,19 +36,15 @@ struct SECTION {
 /* Symbol table entries */
 
 struct SYMBOL {
+    SYMBOL(char *label);
+    ~SYMBOL();
     char           *label;      /* Symbol name */
     unsigned        value;      /* Symbol value */
     int             stmtno;     /* Statement number of symbol's definition */
     unsigned        flags;      /* Symbol flags */
-#define SYMBOLFLAG_PERMANENT 1  /* Symbol may not be redefined */
-#define SYMBOLFLAG_GLOBAL 2     /* Symbol is global */
-#define SYMBOLFLAG_WEAK 4       /* Symbol definition is weak */
-#define SYMBOLFLAG_DEFINITION 8 /* Symbol is a global definition, not reference */
-#define SYMBOLFLAG_UNDEFINED 16 /* Symbol is a phony, undefined */
-#define SYMBOLFLAG_LOCAL 32     /* Set if this is a local label (i.e. 10$) */
 
     SECTION        *section;    /* Section in which this symbol is defined */
-    SYMBOL  *next;       /* Next symbol with the same hash value */
+    SYMBOL         *next;       /* Next symbol with the same hash value */
 };
 
 
@@ -289,16 +293,21 @@ enum operand_codes { OC_MASK = 0xff00,
 
 #define HASH_SIZE 1023
 
-typedef struct symbol_table {
-    SYMBOL         *hash[HASH_SIZE];
-} SYMBOL_TABLE;
-
-
 /* SYMBOL_ITER is used for iterating thru a symbol table. */
 typedef struct symbol_iter {
     int             subscript;  /* Current hash subscript */
     SYMBOL         *current;    /* Current symbol */
 } SYMBOL_ITER;
+
+struct SYMBOL_TABLE {
+    SYMBOL         *hash[HASH_SIZE];
+    SYMBOL         *add_sym(const char *label, unsigned value, unsigned flags, SECTION *section);
+    SYMBOL         *first_sym(SYMBOL_ITER *iter);
+    SYMBOL         *lookup_sym(char *label);
+    SYMBOL         *next_sym(SYMBOL_ITER *iter);
+    void            remove_sym(SYMBOL *sym);
+    void            add_table(SYMBOL *sym);
+};
 
 
 #ifndef SYMBOLS__C
@@ -317,15 +326,14 @@ extern SYMBOL_TABLE implicit_st;        /* The symbols which may be implicit glo
 
 int             hash_name(char *label);
 
-SYMBOL         *add_sym(const char *label, unsigned value, unsigned flags, SECTION *section, SYMBOL_TABLE *table);
-SYMBOL         *first_sym(SYMBOL_TABLE *table, SYMBOL_ITER *iter);
 
-SYMBOL         *lookup_sym(char *label, SYMBOL_TABLE *table);
-SYMBOL         *next_sym(SYMBOL_TABLE *table, SYMBOL_ITER *iter);
-void            free_sym(SYMBOL *sym);
-void            remove_sym(SYMBOL *sym, SYMBOL_TABLE *table);
 char           *symflags(SYMBOL *sym);
-void            add_table(SYMBOL *sym, SYMBOL_TABLE *table);
 void            add_symbols(SECTION *current_section);
+// SYMBOL         *add_sym(const char *label, unsigned value, unsigned flags, SECTION *section, SYMBOL_TABLE *table);
+// SYMBOL         *first_sym(SYMBOL_TABLE *table, SYMBOL_ITER *iter);
+// SYMBOL         *lookup_sym(char *label, SYMBOL_TABLE *table);
+// SYMBOL         *next_sym(SYMBOL_TABLE *table, SYMBOL_ITER *iter);
+// void            remove_sym(SYMBOL *sym, SYMBOL_TABLE *table);
+// void            add_table(SYMBOL *sym, SYMBOL_TABLE *table);
 
 #endif

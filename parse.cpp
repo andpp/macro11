@@ -90,7 +90,7 @@ SYMBOL         *get_op(
             return NULL;
     }
 
-    op = lookup_sym(label, &system_st);
+    op = system_st.lookup_sym(label);
     free(label);
 
     if (endp)
@@ -371,8 +371,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, ADD_PREC);
-            tp = new EX_TREE();
-            tp->type = EX_ADD;
+            tp = new EX_TREE(EX_ADD);
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
             tp->cp = rightp->cp;
@@ -384,8 +383,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, ADD_PREC);
-            tp = new EX_TREE();
-            tp->type = EX_SUB;
+            tp = new EX_TREE(EX_SUB);
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
             tp->cp = rightp->cp;
@@ -397,8 +395,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, MUL_PREC);
-            tp = new EX_TREE();
-            tp->type = EX_MUL;
+            tp = new EX_TREE(EX_MUL);
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
             tp->cp = rightp->cp;
@@ -410,8 +407,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, MUL_PREC);
-            tp = new EX_TREE();
-            tp->type = EX_DIV;
+            tp = new EX_TREE(EX_DIV);
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
             tp->cp = rightp->cp;
@@ -423,8 +419,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, 2);
-            tp = new EX_TREE();
-            tp->type = EX_OR;
+            tp = new EX_TREE(EX_OR);
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
             tp->cp = rightp->cp;
@@ -436,8 +431,7 @@ EX_TREE        *parse_binary(
                 return leftp;
 
             rightp = parse_binary(cp + 1, term, AND_PREC);
-            tp = new EX_TREE();
-            tp->type = EX_AND;
+            tp = new EX_TREE(EX_AND);
             tp->data.child.left = leftp;
             tp->data.child.right = rightp;
             tp->cp = rightp->cp;
@@ -606,8 +600,7 @@ EX_TREE        *parse_unary(
             return ex_err(NULL, cp);
 
         /* This returns references to the built-in register symbols */
-        tp = new EX_TREE();
-        tp->type = EX_SYM;
+        tp = new EX_TREE(EX_SYM);
         tp->data.symbol = reg_sym[reg];
         tp->cp = cp;
         return tp;
@@ -615,8 +608,7 @@ EX_TREE        *parse_unary(
 
     /* Unary negate */
     if (*cp == '-') {
-        tp = new EX_TREE();
-        tp->type = EX_NEG;
+        tp = new EX_TREE(EX_NEG);
         tp->data.child.left = parse_unary(cp + 1);
         tp->cp = tp->data.child.left->cp;
         return tp;
@@ -632,8 +624,7 @@ EX_TREE        *parse_unary(
         switch (tolower(cp[1])) {
         case 'c':
             /* ^C, ones complement */
-            tp = new EX_TREE();
-            tp->type = EX_COM;
+            tp = new EX_TREE(EX_COM);
             tp->data.child.left = parse_unary(cp + 2);
             tp->cp = tp->data.child.left->cp;
             return tp;
@@ -729,8 +720,7 @@ EX_TREE        *parse_unary(
     if (*cp == '\'') {
         /* 'x single ASCII character */
         cp++;
-        tp = new EX_TREE();
-        tp->type = EX_LIT;
+        tp = new EX_TREE(EX_LIT);
         tp->data.lit = *cp & 0xff;
         tp->cp = ++cp;
         return tp;
@@ -739,8 +729,7 @@ EX_TREE        *parse_unary(
     if (*cp == '\"') {
         /* "xx ASCII character pair */
         cp++;
-        tp = new EX_TREE();
-        tp->type = EX_LIT;
+        tp = new EX_TREE(EX_LIT);
         tp->data.lit = (cp[0] & 0xff) | ((cp[1] & 0xff) << 8);
         tp->cp = cp + 2;
         return tp;
@@ -769,8 +758,7 @@ EX_TREE        *parse_unary(
             if (*endcp == '.')
                 endcp++;
 
-            tp = new EX_TREE();
-            tp->type = EX_LIT;
+            tp = new EX_TREE(EX_LIT);
             tp->data.lit = value;
             tp->cp = endcp;
 
@@ -795,17 +783,16 @@ EX_TREE        *parse_unary(
             return tp;
         }
 
-        sym = lookup_sym(label, &symbol_st);
+        sym = symbol_st.lookup_sym(label);
         if (sym == NULL) {
             /* A symbol from the "PST", which means an instruction
                code. */
-            sym = lookup_sym(label, &system_st);
+            sym = system_st.lookup_sym(label);
         }
 
         if (sym != NULL) {
-            tp = new EX_TREE();
+            tp = new EX_TREE(EX_SYM);
             tp->cp = cp;
-            tp->type = EX_SYM;
             tp->data.symbol = sym;
 
             free(label);
@@ -822,9 +809,8 @@ EX_TREE        *parse_unary(
         sym->section = &absolute_section;
         sym->value = 0;
 
-        tp = new EX_TREE();
+        tp = new EX_TREE(EX_UNDEFINED_SYM);
         tp->cp = cp;
-        tp->type = EX_UNDEFINED_SYM;
         tp->data.symbol = sym;
 
         return tp;

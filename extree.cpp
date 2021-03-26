@@ -234,15 +234,14 @@ EX_TREE * EX_TREE::evaluate(int undef)
             }
 
             /* Copy other symbol reference verbatim. */
-            res = new EX_TREE();
-            res->type = EX_SYM;
+            res = new EX_TREE(EX_SYM);
             res->data.symbol = data.symbol;
             res->cp = cp;
             break;
         }
 
     case EX_LIT:
-        res = new EX_TREE();
+        res = new EX_TREE(EX_LIT);
         *res = *this;
         break;
 
@@ -262,8 +261,7 @@ EX_TREE * EX_TREE::evaluate(int undef)
             delete (tp);
         } else {
             /* Copy verbatim. */
-            res = new EX_TREE();
-            res->type = EX_NEG;
+            res = new EX_TREE(EX_NEG);
             res->cp = tp->cp;
             res->data.child.left = tp;
         }
@@ -285,8 +283,7 @@ EX_TREE * EX_TREE::evaluate(int undef)
             delete (tp);
         } else {
             /* Copy verbatim. */
-            res = new EX_TREE();
-            res->type = EX_NEG;
+            res = new EX_TREE(EX_NEG);
             res->cp = tp->cp;
             res->data.child.left = tp;
         }
@@ -369,8 +366,7 @@ EX_TREE * EX_TREE::evaluate(int undef)
             }
 
             /* Anything else returns verbatim */
-            res = new EX_TREE();
-            res->type = EX_ADD;
+            res = new EX_TREE(EX_ADD);
             res->data.child.left = left;
             res->data.child.right = right;
         }
@@ -448,8 +444,7 @@ EX_TREE * EX_TREE::evaluate(int undef)
             }
 
             /* Anything else returns verbatim */
-            res = new EX_TREE();
-            res->type = EX_SUB;
+            res = new EX_TREE(EX_SUB);
             res->data.child.left = left;
             res->data.child.right = right;
         }
@@ -513,8 +508,7 @@ EX_TREE * EX_TREE::evaluate(int undef)
             }
 
             /* Anything else returns verbatim */
-            res = new EX_TREE();
-            res->type = EX_MUL;
+            res = new EX_TREE(EX_MUL);
             res->data.child.left = left;
             res->data.child.right = right;
         }
@@ -544,8 +538,7 @@ EX_TREE * EX_TREE::evaluate(int undef)
             }
 
             /* Anything else returns verbatim */
-            res = new EX_TREE();
-            res->type = EX_DIV;
+            res = new EX_TREE(EX_DIV);
             res->data.child.left = left;
             res->data.child.right = right;
         }
@@ -592,8 +585,7 @@ EX_TREE * EX_TREE::evaluate(int undef)
             }
 
             /* Anything else returns verbatim */
-            res = new EX_TREE();
-            res->type = EX_AND;
+            res = new EX_TREE(EX_AND);
             res->data.child.left = left;
             res->data.child.right = right;
         }
@@ -640,8 +632,7 @@ EX_TREE * EX_TREE::evaluate(int undef)
             }
 
             /* Anything else returns verbatim */
-            res = new EX_TREE();
-            res->type = EX_OR;
+            res = new EX_TREE(EX_OR);
             res->data.child.left = left;
             res->data.child.right = right;
         }
@@ -670,9 +661,8 @@ EX_TREE        * ex_err(EX_TREE *tp, char *cp)
 {
     EX_TREE        *errtp;
 
-    errtp = new EX_TREE();
+    errtp = new EX_TREE(EX_ERR);
     errtp->cp = cp;
-    errtp->type = EX_ERR;
     errtp->data.child.left = tp;
 
     return errtp;

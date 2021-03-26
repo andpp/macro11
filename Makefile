@@ -1,4 +1,4 @@
-CFLAGS ?= -O -g -Wall
+CPPFLAGS := -O -g -Wall
 CC = g++
 
 MACRO11_SRCS = macro11.cpp \

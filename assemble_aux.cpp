@@ -211,7 +211,7 @@ void implicit_gbl(
         {
             if (!(value->data.symbol->flags & SYMBOLFLAG_LOCAL)) {      /* Unless it's a
                                                                            local symbol, */
-                add_sym(value->data.symbol->label, 0, SYMBOLFLAG_GLOBAL, &absolute_section, &implicit_st);
+                implicit_st.add_sym(value->data.symbol->label, 0, SYMBOLFLAG_GLOBAL, &absolute_section);
             }
         }
         break;
@@ -248,11 +248,11 @@ void migrate_implicit(
     SYMBOL         *isym,
                    *sym;
 
-    for (isym = first_sym(&implicit_st, &iter); isym != NULL; isym = next_sym(&implicit_st, &iter)) {
-        sym = lookup_sym(isym->label, &symbol_st);
+    for (isym = implicit_st.first_sym(&iter); isym != NULL; isym = implicit_st.next_sym(&iter)) {
+        sym = symbol_st.lookup_sym(isym->label);
         if (sym)
             continue;                  // It's already in there.  Great.
-        sym = add_sym(isym->label, isym->value, isym->flags, isym->section, &symbol_st);
+        sym = symbol_st.add_sym(isym->label, isym->value, isym->flags, isym->section);
         // Just one other thing - migrate the stmtno
         sym->stmtno = isym->stmtno;
     }
@@ -711,7 +711,7 @@ void write_globals(
         psect->sector = isect;         /* Assign it a sector */
         psect->pc = 0;                 /* Reset it's PC for second pass */
 
-        sym = first_sym(&symbol_st, &sym_iter);
+        sym = symbol_st.first_sym(&sym_iter);
         while (sym) {
             if ((sym->flags & SYMBOLFLAG_GLOBAL) && sym->section == psect) {
                 gsd_global(&gsd, sym->label,
@@ -723,7 +723,7 @@ void write_globals(
                            /* Looks undefined, but add it in anyway */
                            sym->value);
             }
-            sym = next_sym(&symbol_st, &sym_iter);
+            sym = symbol_st.next_sym(&sym_iter);
         }
     }
 
