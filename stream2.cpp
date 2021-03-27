@@ -163,10 +163,10 @@ void BUFFER::buffer_append_line(char *str)
 
 /* stream_construct initializes a newly allocated STREAM */
 
-STREAM::STREAM(char *name): str_type(TYPE_BASE_STREAM)
+STREAM::STREAM(char *_name): str_type(TYPE_BASE_STREAM)
 {
     line = 0;
-    name = (char *)memcheck(strdup(name));
+    name = (char *)memcheck(strdup(_name));
     next = NULL;
 }
 

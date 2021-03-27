@@ -1,9 +1,26 @@
-   .MACRO TEST CONTRL=1, BLOCK, ADDRES=TEMP
+TAG1:  .WORD ^C151
+       .WORD ^C2+6
+       .WORD 8.
+
+       .WORD 10
+       .RADIX 10
+       .WORD 8
+       .RADIX 8
+       .WORD 8
+       .WORD 18
+       .WORD 080
+       .RADIX W
+
+      MOV %1, -(SP)
+      MOV %#TAG1, -(SP)
+
+.MACRO TEST CONTRL=1, BLOCK, ADDRES=TEMP
    .WORD CONTRL
    .WORD BLOCK
    .WORD ADDRES
-   .ENDM
+.ENDM
 
+   .ASCIZ <0111>"ACSIZ text"
 
    TEST A, B, C
    TEST ADDRES=20,BLOCK=30,CONTRL=40
@@ -11,5 +28,57 @@
    TEST CONTRL=5, ADDRES=VARIAB
    TEST
    TEST ADDRES=JACK!JILL
+
+.MACRO DEF A,B,C
+A'B: .ASCIZ /C/
+     .BYTE ''A,''B
+.ENDM
+
+     DEF X,Y,<MACRO-11>
+
+.MACRO NULL NUM
+     .NARG SYM
+     .IF EQ SYM
+     .MEXIT
+     .IFF
+     .REPT NUM
+     NOP
+     .ENDM
+     .ENDC
+.ENDM
+
+     .EVEN
+     NULL 4
+
+BLKW:  .BLKW 4
+BLKB:  .BLKB 4
+
+.MACRO STRING MESSAGE
+     .NCHR $$$,MESSAGE
+     .WORD $$$
+     .ASCII /MESSAGE/
+     .EVEN
+.ENDM
+
+MSG::  STRING <Hello>
+
+.MACRO SAVE ARG
+       .NTYPE  $$$,ARG
+       .IF EQ $$$&70
+           MOV ARG,-(SP)    ; Save Register mode
+           .IFF
+           MOV #ARG,-(SP)   ; Save non-register mode
+       .ENDC
+.ENDM
+
+        SAVE R1
+        SAVE MSG
+
+REGS:   .IRP REG,<PC,SP,R5,R4,R3,R2,R1,R0>
+        .RAD50 /REG/
+        .ENDR
+REGS2:  .IRPC NUM,<76543210>
+        .RAD50 /R'NUM/
+        .ENDR
 
    .END

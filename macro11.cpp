@@ -382,7 +382,7 @@ int main(
         fclose(obj);
 
     if (errcount > 0)
-        fprintf(stderr, "%d Errors\n", errcount);
+        fprintf(stderr, "%d Error(s)\n", error_count);
 
     if (lstfile && strcmp(lstname, "-") != 0)
         fclose(lstfile);

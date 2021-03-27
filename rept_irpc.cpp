@@ -156,7 +156,7 @@ char  *IRP_STREAM::gets()
         arg = new ARG();
         arg->next = NULL;
         arg->locsym = 0;
-        arg->label = label;
+        arg->label = strdup(label);
         arg->value = getstring(cp, &cp);
         cp = skipdelim(cp);
         offset = (int) (cp - items);
@@ -164,8 +164,8 @@ char  *IRP_STREAM::gets()
         eval_arg(this, arg);
         buf = subst_args(body, arg);
 
-        free(arg->value);
-        free(arg);
+        // free(arg->value);
+        delete (arg);
         set_buffer(buf);
         buffer_free(buf);
     }
@@ -283,7 +283,7 @@ char           *IRPC_STREAM::gets()
         arg = new ARG();
         arg->next = NULL;
         arg->locsym = 0;
-        arg->label = label;
+        arg->label = strdup(label);
         arg->value = (char *)memcheck(malloc(2));
         arg->value[0] = *cp++;
         arg->value[1] = 0;
@@ -291,7 +291,7 @@ char           *IRPC_STREAM::gets()
 
         buf = subst_args(body, arg);
 
-        free(arg->value);
+        // free(arg->value);
         delete (arg);
         set_buffer(buf);
         buffer_free(buf);

@@ -35,6 +35,8 @@ extern int      list_level;     /* Listing control level.  .LIST
 
 extern FILE    *lstfile;
 
+extern int error_count;
+
 #endif
 
 

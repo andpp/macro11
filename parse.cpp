@@ -4,6 +4,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "parse.h"                     /* my own definitions */
 
@@ -758,6 +759,12 @@ EX_TREE        *parse_unary(
             if (*endcp == '.')
                 endcp++;
 
+            if (cp == endcp) {
+                //  Number in string can't be parsed. Most likely radix error
+                for (endcp = cp; isdigit(*endcp); endcp++) ;
+                return ex_err(NULL, endcp);
+
+            }
             tp = new EX_TREE(EX_LIT);
             tp->data.lit = value;
             tp->cp = endcp;

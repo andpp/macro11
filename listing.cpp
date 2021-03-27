@@ -10,6 +10,8 @@
 #include "util.h"
 #include "assemble_globals.h"
 
+int error_count = 0;
+
 
 /* GLOBAL VARIABLES */
 
@@ -149,6 +151,7 @@ void report(STREAM *str, const char *fmt, ...)
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);
+    error_count++;
 
     if (lstfile) {
         fprintf(lstfile, "%s:%d: ***ERROR ", name, line);

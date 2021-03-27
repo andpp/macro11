@@ -54,7 +54,7 @@ unsigned rad50(
     char           *rp;
 
     if (endp)
-        *endp = cp;
+        *endp = cp + 1;
 
     if (!*cp)                          /* Got to check for end-of-string manually, because strchr will call it a hit.  :-/ */
         return acc;
