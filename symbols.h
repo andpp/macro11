@@ -307,6 +307,7 @@ struct SYMBOL_TABLE {
     SYMBOL         *next_sym(SYMBOL_ITER *iter);
     void            remove_sym(SYMBOL *sym);
     void            add_table(SYMBOL *sym);
+    void            dump();   /* Domp symbol table */
 };
 
 

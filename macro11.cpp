@@ -387,5 +387,7 @@ int main(
     if (lstfile && strcmp(lstname, "-") != 0)
         fclose(lstfile);
 
+    symbol_st.dump();
+
     return errcount > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

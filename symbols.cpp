@@ -206,6 +206,24 @@ SYMBOL         * SYMBOL_TABLE::add_sym(const char *labelraw, unsigned value, uns
     return sym;
 }
 
+void SYMBOL_TABLE::dump()
+{
+    SYMBOL_ITER iter;
+    SYMBOL *sym;
+    for(sym=first_sym(&iter); sym != NULL; sym = next_sym(&iter))
+    {
+        printf("%s %o ", sym->label, sym->value);
+        if(sym->flags & SYMBOLFLAG_PERMANENT)  printf(" Permanent");  /* Symbol may not be redefined */
+        if(sym->flags & SYMBOLFLAG_GLOBAL)     printf(" Global");      /* Symbol is global */
+        if(sym->flags & SYMBOLFLAG_WEAK)       printf(" Weak");       /* Symbol definition is weak */
+        if(sym->flags & SYMBOLFLAG_DEFINITION) printf(" Def"); /* Symbol is a global definition, not reference */
+        if(sym->flags & SYMBOLFLAG_UNDEFINED)  printf(" Undef"); /* Symbol is a phony, undefined */
+        if(sym->flags & SYMBOLFLAG_LOCAL)      printf(" Local");     /* Set if this is a local label (i.e. 10$) */
+        printf("\n");
+    }
+
+}
+
 /* add_symbols adds all the internal symbols. */
 
 void add_symbols(SECTION *current_section)
