@@ -47,6 +47,7 @@ DAMAGE.
 #include "rad50.h"
 
 #include "object.h"
+#include "assemble_globals.h"
 
 //#include "macro11.h"
 
@@ -141,21 +142,37 @@ static int gsd_write(GSD * gsd, char *name, int flags, int type, int value)
             return 0;
     }
 
-    rad50x2(name, radtbl);
+    if(disable_rad50_symbols) {
+        cp = gsd->buf + gsd->offset;
+        int nlen = strlen(name) + 1;
+        memcpy(cp, name, nlen);
+        cp+=nlen;
 
-    cp = gsd->buf + gsd->offset;
-    *cp++ = radtbl[0] & 0xff;
-    *cp++ = (radtbl[0] >> 8) & 0xff;
-    *cp++ = radtbl[1] & 0xff;
-    *cp++ = (radtbl[1] >> 8) & 0xff;
+        *cp++ = flags;
+        *cp++ = type;
 
-    *cp++ = flags;
-    *cp++ = type;
+        *cp++ = value & 0xff;
+        *cp = (value >> 8) & 0xff;
 
-    *cp++ = value & 0xff;
-    *cp = (value >> 8) & 0xff;
+        gsd->offset += nlen + 4;
 
-    gsd->offset += 8;
+    } else {
+        rad50x2(name, radtbl);
+
+        cp = gsd->buf + gsd->offset;
+        *cp++ = radtbl[0] & 0xff;
+        *cp++ = (radtbl[0] >> 8) & 0xff;
+        *cp++ = radtbl[1] & 0xff;
+        *cp++ = (radtbl[1] >> 8) & 0xff;
+
+        *cp++ = flags;
+        *cp++ = type;
+
+        *cp++ = value & 0xff;
+        *cp = (value >> 8) & 0xff;
+
+        gsd->offset += 8;
+    }
 
     return 1;
 }
@@ -279,6 +296,17 @@ static int text_fit(TEXT_RLD *tr, unsigned addr, int txtsize, int rldsize)
     return 1;
 }
 
+/* rld_word - adds a word to the RLD information. */
+
+static void rld_name(TEXT_RLD *tr, char *name)
+{
+    while(*name) {
+        tr->rld[tr->rld_offset++] = *name++;
+    }
+    tr->rld[tr->rld_offset++] = 0;
+}
+
+
 /* text_word_i - internal text_word.  Used when buffer space is
    already assured. */
 
@@ -363,9 +391,13 @@ int text_global_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char
     text_word_i(tr, word, size);
     rld_code(tr, RLD_GLOBAL, *addr, size);
 
-    rad50x2(global, radtbl);
-    rld_word(tr, radtbl[0]);
-    rld_word(tr, radtbl[1]);
+    if(disable_rad50_symbols) {
+        rld_name(tr, global);
+    } else {
+        rad50x2(global, radtbl);
+        rld_word(tr, radtbl[0]);
+        rld_word(tr, radtbl[1]);
+    }
 
     *addr += size;
 
@@ -400,9 +432,13 @@ int text_global_displaced_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned 
     text_word_i(tr, word, size);
     rld_code(tr, RLD_GLOBAL_DISP, *addr, size);
 
-    rad50x2(global, radtbl);
-    rld_word(tr, radtbl[0]);
-    rld_word(tr, radtbl[1]);
+    if(disable_rad50_symbols) {
+        rld_name(tr, global);
+    } else {
+        rad50x2(global, radtbl);
+        rld_word(tr, radtbl[0]);
+        rld_word(tr, radtbl[1]);
+    }
 
     *addr += size;
 
@@ -428,9 +464,13 @@ int text_global_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned wor
 
     rld_code(tr, RLD_GLOBAL_OFFSET, *addr, size);
 
-    rad50x2(global, radtbl);
-    rld_word(tr, radtbl[0]);
-    rld_word(tr, radtbl[1]);
+    if(disable_rad50_symbols) {
+        rld_name(tr, global);
+    } else {
+        rad50x2(global, radtbl);
+        rld_word(tr, radtbl[0]);
+        rld_word(tr, radtbl[1]);
+    }
     rld_word(tr, word);
 
     *addr += size;
@@ -456,9 +496,13 @@ int text_global_displaced_offset_word(TEXT_RLD *tr, unsigned *addr, int size, un
     text_word_i(tr, word, size);
     rld_code(tr, RLD_GLOBAL_OFFSET_DISP, *addr, size);
 
-    rad50x2(global, radtbl);
-    rld_word(tr, radtbl[0]);
-    rld_word(tr, radtbl[1]);
+    if(disable_rad50_symbols) {
+        rld_name(tr, global);
+    } else {
+        rad50x2(global, radtbl);
+        rld_word(tr, radtbl[0]);
+        rld_word(tr, radtbl[1]);
+    }
     rld_word(tr, word);
 
     *addr += size;
@@ -481,9 +525,15 @@ int text_define_location(TEXT_RLD *tr, char *name, unsigned *addr)
     rld_code_naddr(tr, RLD_LOCDEF, 2); /* RLD code for "location
                                           counter def" with no offset */
 
-    rad50x2(name, radtbl);
-    rld_word(tr, radtbl[0]);           /* Set current section name */
-    rld_word(tr, radtbl[1]);
+    /* Set current section name */
+    if(disable_rad50_symbols) {
+        rld_name(tr, name);
+    } else {
+        rad50x2(name, radtbl);
+        rld_word(tr, radtbl[0]);
+        rld_word(tr, radtbl[1]);
+    }
+
     rld_word(tr, *addr);               /* Set current location addr */
 
     if (!text_flush(tr))               /* Flush that block out. */
@@ -544,9 +594,13 @@ int text_psect_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char 
 
     rld_code(tr, RLD_PSECT, *addr, size);
 
-    rad50x2(name, radtbl);
-    rld_word(tr, radtbl[0]);
-    rld_word(tr, radtbl[1]);
+    if(disable_rad50_symbols) {
+        rld_name(tr, name);
+    } else {
+        rad50x2(name, radtbl);
+        rld_word(tr, radtbl[0]);
+        rld_word(tr, radtbl[1]);
+    }
 
     *addr += size;
 
@@ -571,9 +625,13 @@ int text_psect_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word
 
     rld_code(tr, RLD_PSECT_OFFSET, *addr, size);
 
-    rad50x2(name, radtbl);
-    rld_word(tr, radtbl[0]);
-    rld_word(tr, radtbl[1]);
+    if(disable_rad50_symbols) {
+        rld_name(tr, name);
+    } else {
+        rad50x2(name, radtbl);
+        rld_word(tr, radtbl[0]);
+        rld_word(tr, radtbl[1]);
+    }
     rld_word(tr, word);
 
     *addr += size;
@@ -594,9 +652,13 @@ int text_psect_displaced_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned w
 
     rld_code(tr, RLD_PSECT_DISP, *addr, size);
 
-    rad50x2(name, radtbl);
-    rld_word(tr, radtbl[0]);
-    rld_word(tr, radtbl[1]);
+    if(disable_rad50_symbols) {
+        rld_name(tr, name);
+    } else {
+        rad50x2(name, radtbl);
+        rld_word(tr, radtbl[0]);
+        rld_word(tr, radtbl[1]);
+    }
 
     *addr += size;
 
@@ -622,9 +684,13 @@ int text_psect_displaced_offset_word(TEXT_RLD *tr, unsigned *addr, int size, uns
 
     rld_code(tr, RLD_PSECT_OFFSET_DISP, *addr, size);
 
-    rad50x2(name, radtbl);
-    rld_word(tr, radtbl[0]);
-    rld_word(tr, radtbl[1]);
+    if(disable_rad50_symbols) {
+        rld_name(tr, name);
+    } else {
+        rad50x2(name, radtbl);
+        rld_word(tr, radtbl[0]);
+        rld_word(tr, radtbl[1]);
+    }
     rld_word(tr, word);
 
     *addr += size;
@@ -744,17 +810,26 @@ int text_complex_lit(TEXT_COMPLEX *tx, unsigned word)
 int text_complex_global(TEXT_COMPLEX *tx, char *name)
 {
     unsigned        radtbl[2];
-    char           *cp = text_complex_fit(tx, 5);
+    int size = disable_rad50_symbols ? strlen(name) + 1 + 1 : 5;
+    char           *cp = text_complex_fit(tx, size);
 
     if (!cp)
         return 0;
 
-    rad50x2(name, radtbl);
-    *cp++ = CPLX_GLOBAL;
-    *cp++ = radtbl[0] & 0xff;
-    *cp++ = (radtbl[0] >> 8) & 0xff;
-    *cp++ = radtbl[1] & 0xff;
-    *cp = (radtbl[1] >> 8) & 0xff;
+    if(disable_rad50_symbols) {
+        *cp++ = CPLX_GLOBAL;
+        while(*name) {
+            *cp++ = *name++;
+        }
+        *cp = 0;
+    } else {
+        rad50x2(name, radtbl);
+        *cp++ = CPLX_GLOBAL;
+        *cp++ = radtbl[0] & 0xff;
+        *cp++ = (radtbl[0] >> 8) & 0xff;
+        *cp++ = radtbl[1] & 0xff;
+        *cp = (radtbl[1] >> 8) & 0xff;
+    }
     return 1;
 }
 

@@ -282,10 +282,11 @@ void got_gsd(char *cp, int len)
     int    i;
     char  *gsdline;
 
-    for (i = 2; i < len; i += 8) {
-        char            name[8];
+    for (i = 2; i < len;) {
+        char            name[64];
         unsigned        value;
         unsigned        flags;
+        unsigned        type;
 
         gsdline = (char *)malloc(256);
         if (gsdline == NULL) {
@@ -293,14 +294,21 @@ void got_gsd(char *cp, int len)
             exit(EXIT_FAILURE);
         }
 
-        unrad50(WORD(cp + i), name);
-        unrad50(WORD(cp + i + 2), name + 3);
-        name[6] = 0;
+//        unrad50(WORD(cp + i), name);
+//        unrad50(WORD(cp + i + 2), name + 3);
+//        name[6] = 0;
+        char *n = name;
+        do {
+            *n++ = cp[i++];
+        } while (cp[i-1] != 0);
 
-        value = WORD(cp + i + 6);
-        flags = cp[i + 4] & 0xff;
+        flags = cp[i++];
+        type =  cp[i++];
+        value = WORD(cp + i);
+        i+=2;
 
-        switch (cp[i + 5] & 0xff) {
+
+        switch (type) {
         case 0:
             sprintf(gsdline, "\tMODNAME %s=%o flags=%o\n", name, value, flags);
             break;
@@ -380,12 +388,20 @@ void got_text(char *cp, int len)
         dump_bin(last_text_addr, cp + 4, len - 4);
 }
 
-void rad50name(char *cp, char *name)
+int rad50name(char *cp, char *name)
 {
-    unrad50(WORD(cp), name);
-    unrad50(WORD(cp + 2), name + 3);
-    name[6] = 0;
+//    unrad50(WORD(cp), name);
+//    unrad50(WORD(cp + 2), name + 3);
+//    name[6] = 0;
+    int i = 0;
+    while(cp[i]) {
+        name[i] = cp[i];
+        i++;
+    }
+    name[i++] = 0;
     trim(name);
+    return i;
+
 }
 
 void got_rld(char *cp, int len)
@@ -398,7 +414,7 @@ void got_rld(char *cp, int len)
         unsigned        addr;
         unsigned        word;
         unsigned        disp = cp[i + 1] & 0xff;
-        char            name[8];
+        char            name[64];
         char           *byte;
 
         addr = last_text_addr + disp - 4;
@@ -413,9 +429,9 @@ void got_rld(char *cp, int len)
             i += 4;
             break;
         case 02:
-            rad50name(cp + i + 2, name);
+            i += rad50name(cp + i + 2, name);
             printf("\tGlobal%s %o=%s\n", byte, addr, name);
-            i += 6;
+            i += 2;
             break;
         case 03:
             printf("\tInternal displaced%s %o=%o\n", byte, addr, WORD(cp + i + 2));
@@ -423,30 +439,30 @@ void got_rld(char *cp, int len)
             badbin = 1;
             break;
         case 04:
-            rad50name(cp + i + 2, name);
+            i += rad50name(cp + i + 2, name);
             printf("\tGlobal displaced%s %o=%s\n", byte, addr, name);
-            i += 6;
+            i += 2;
             badbin = 1;
             break;
         case 05:
-            rad50name(cp + i + 2, name);
-            word = WORD(cp + i + 6);
+            i += rad50name(cp + i + 2, name);
+            word = WORD(cp + i + 2);
             printf("\tGlobal plus offset%s %o=%s+%o\n", byte, addr, name, word);
-            i += 8;
+            i += 6;
             badbin = 1;
             break;
         case 06:
-            rad50name(cp + i + 2, name);
-            word = WORD(cp + i + 6);
+            i += rad50name(cp + i + 2, name);
+            word = WORD(cp + i + 2);
             printf("\tGlobal plus offset displaced%s %o=%s+%o\n", byte, addr, name, word);
-            i += 8;
+            i += 6;
             badbin = 1;
             break;
         case 07:
-            rad50name(cp + i + 2, name);
-            word = WORD(cp + i + 6);
+            i += rad50name(cp + i + 2, name);
+            word = WORD(cp + i + 2);
             printf("\tLocation counter definition %s+%o\n", name, word);
-            i += 8;
+            i += 6;
 
             last_text_addr = word;
             break;
@@ -463,30 +479,30 @@ void got_rld(char *cp, int len)
             break;
 
         case 012:
-            rad50name(cp + i + 2, name);
+            i += rad50name(cp + i + 2, name);
             printf("\tPSECT%s %o=%s\n", byte, addr, name);
-            i += 6;
+            i += 4;
             badbin = 1;
             break;
         case 014:
-            rad50name(cp + i + 2, name);
+            i += rad50name(cp + i + 2, name);
 
             printf("\tPSECT displaced%s %o=%s+%o\n", byte, addr, name, word);
-            i += 6;
+            i += 4;
             badbin = 1;
             break;
         case 015:
-            rad50name(cp + i + 2, name);
-            word = WORD(cp + i + 6);
+            i += rad50name(cp + i + 2, name);
+            word = WORD(cp + i + 2);
             printf("\tPSECT plus offset%s %o=%s+%o\n", byte, addr, name, word);
-            i += 8;
+            i += 6;
             badbin = 1;
             break;
         case 016:
-            rad50name(cp + i + 2, name);
-            word = WORD(cp + i + 6);
+            i += rad50name(cp + i + 2, name);
+            word = WORD(cp + i + 2);
             printf("\tPSECT plus offset displaced%s %o=%s+%o\n", byte, addr, name, word);
-            i += 8;
+            i += 6;
             badbin = 1;
             break;
 
@@ -535,9 +551,9 @@ void got_rld(char *cp, int len)
                         break;
 
                     case 016:
-                        rad50name(xp + 1, name);
+                        size = rad50name(xp + 1, name)+1;
                         printf("%s ", name);
-                        size = 5;
+//                        size = 5;
                         break;
 
                     case 017:

@@ -43,6 +43,8 @@ extern int      enabl_lsb;      /* When set, stops non-local symbol
 
 extern int      enabl_gbl;      /* Implicit definition of global symbols */
 
+extern int      disable_rad50_symbols;  /* Write full symbol name to OBJ instead of RAD50 encoding */
+
 extern int      suppressed;     /* Assembly suppressed by failed conditional */
 
 extern MLB     *mlbs[MAX_MLBS]; /* macro libraries specified on the command line */
