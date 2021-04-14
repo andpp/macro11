@@ -313,15 +313,15 @@ struct SYMBOL_TABLE {
 
 #ifndef SYMBOLS__C
 
-extern int      symbol_len;     /* max. len of symbols. default = 6 */
-extern int      symbol_allow_underscores;       /* allow "_" in symbol names */
+extern int      Glb_symbol_len;     /* max. len of symbols. default = 6 */
+extern int      Glb_symbol_allow_underscores;       /* allow "_" in symbol names */
 extern SYMBOL  *reg_sym[8];     /* Keep the register symbols in a handy array */
-extern SYMBOL_TABLE system_st;  /* System symbols (Instructions,
+extern SYMBOL_TABLE Glb_system_st;  /* System symbols (Instructions,
                                    pseudo-ops, registers) */
-extern SYMBOL_TABLE section_st; /* Program sections */
-extern SYMBOL_TABLE symbol_st;  /* User symbols */
-extern SYMBOL_TABLE macro_st;   /* Macros */
-extern SYMBOL_TABLE implicit_st;        /* The symbols which may be implicit globals */
+extern SYMBOL_TABLE Glb_section_st; /* Program sections */
+extern SYMBOL_TABLE Glb_symbol_st;  /* User symbols */
+extern SYMBOL_TABLE Glb_macro_st;   /* Macros */
+extern SYMBOL_TABLE Glb_implicit_st;        /* The symbols which may be implicit globals */
 
 #endif
 

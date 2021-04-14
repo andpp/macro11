@@ -48,7 +48,7 @@ DAMAGE.
 
 #include "object.h"
 
-#include "macro11.h"
+//#include "macro11.h"
 
 /*
   writerec writes "formatted binary records."

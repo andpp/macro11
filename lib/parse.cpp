@@ -91,7 +91,7 @@ SYMBOL         *get_op(
             return NULL;
     }
 
-    op = system_st.lookup_sym(label);
+    op = Glb_system_st.lookup_sym(label);
     free(label);
 
     if (endp)
@@ -485,8 +485,8 @@ char           *get_symbol(
     len = (int) (symcp - cp);
 
     /* Now limit length */
-    if (len > symbol_len)
-        len = symbol_len;
+    if (len > Glb_symbol_len)
+        len = Glb_symbol_len;
 
     symcp = (char *)memcheck(malloc(len + 1));
 
@@ -790,11 +790,11 @@ EX_TREE        *parse_unary(
             return tp;
         }
 
-        sym = symbol_st.lookup_sym(label);
+        sym = Glb_symbol_st.lookup_sym(label);
         if (sym == NULL) {
             /* A symbol from the "PST", which means an instruction
                code. */
-            sym = system_st.lookup_sym(label);
+            sym = Glb_system_st.lookup_sym(label);
         }
 
         if (sym != NULL) {
@@ -837,11 +837,14 @@ EX_TREE        *parse_expr(
     EX_TREE        *value;
 
     expr = parse_binary(cp, 0, 0);     /* Parse into a tree */
-    value = expr->evaluate(undef);     /* Perform the arithmetic */
-    value->cp = expr->cp;              /* Pointer to end of text is part of
-                                          the rootmost node  */
-    delete (expr);                   /* Discard parse in favor of
-                                          evaluation */
-
-    return value;
+    if (expr->type != EX_ERR) {
+        value = expr->evaluate(undef);     /* Perform the arithmetic */
+        value->cp = expr->cp;              /* Pointer to end of text is part of
+                                              the rootmost node  */
+        delete (expr);                   /* Discard parse in favor of
+                                            evaluation */
+        return value;
+    } else {
+        return expr;
+    }
 }

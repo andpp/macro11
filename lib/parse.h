@@ -9,7 +9,7 @@
 // is char 'c' part of a symbol?
 #define issym(c) (isalpha(c) || isdigit(c) \
 		|| (c) == '.' || (c) == '$' \
-		|| (symbol_allow_underscores && (c) == '_'))
+        || (Glb_symbol_allow_underscores && (c) == '_'))
 
 
 char           *skipwhite(

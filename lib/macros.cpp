@@ -170,17 +170,17 @@ MACRO          *defmacro(
     }
 
     /* Allow redefinition of a macro; new definition replaces the old. */
-    mac = (MACRO *) macro_st.lookup_sym(label);
+    mac = (MACRO *) Glb_macro_st.lookup_sym(label);
     if (mac) {
         /* Remove from the symbol table... */
-        macro_st.remove_sym(mac);
+        Glb_macro_st.remove_sym(mac);
        delete (mac);
     }
 
     mac = new MACRO(label);
 
     // macro_st.add_table(mac->sym);
-    macro_st.add_table(mac);
+    Glb_macro_st.add_table(mac);
 
     argtail = &mac->args;
     cp = skipdelim(cp);
@@ -210,7 +210,7 @@ MACRO          *defmacro(
             arg->value = getstring(cp + 1, &cp);
             if (arg->value == NULL) {
                 report(stack->top, "Illegal macro argument\n");
-                macro_st.remove_sym(mac);
+                Glb_macro_st.remove_sym(mac);
                 delete (mac);
                 return NULL;
             }

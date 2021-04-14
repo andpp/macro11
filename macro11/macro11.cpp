@@ -269,11 +269,11 @@ int main(
                     if (*endp || sl < SYMMAX_DEFAULT || sl > SYMMAX_MAX) {
                         usage("-s must be followed by a number\n");
                     }
-                    symbol_len = sl;
+                    Glb_symbol_len = sl;
                 }
             } else if (!stricmp(cp, "yus")) {
                 /* allow underscores */
-                symbol_allow_underscores = 1;
+                Glb_symbol_allow_underscores = 1;
             } else {
                 fprintf(stderr, "Unknown option %s\n", argv[arg]);
                 print_help();
@@ -387,7 +387,7 @@ int main(
     if (lstfile && strcmp(lstname, "-") != 0)
         fclose(lstfile);
 
-    symbol_st.dump();
+    Glb_symbol_st.dump();
 
     return errcount > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

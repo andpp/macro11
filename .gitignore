@@ -1,6 +1,9 @@
 **/*.lst
 **/*.obj
 *.o
-dumpobj
-macro11
 .vscode
+CMakeCache.txt
+CMakeFiles
+CMakeLists.txt.user
+cmake_install.cmake
+Makefile

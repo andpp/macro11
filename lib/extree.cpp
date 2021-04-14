@@ -132,7 +132,8 @@ EX_TREE::~EX_TREE()
 
         case EX_COM:
         case EX_NEG:
-            delete data.child.left;
+            if (data.child.left)
+                delete data.child.left;
             // free(tp);
             break;
 
@@ -148,8 +149,10 @@ EX_TREE::~EX_TREE()
         case EX_DIV:
         case EX_AND:
         case EX_OR:
-            delete (data.child.left);
-            delete (data.child.right);
+            if (data.child.left)
+                delete (data.child.left);
+            if (data.child.right)
+                delete (data.child.right);
             // free(tp);
             break;
     }
