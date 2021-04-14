@@ -53,9 +53,7 @@ FILE           *bin = NULL;
 int             badbin = 0;
 int             xferad = 1;
 
-char           *readrec(
-    FILE *fp,
-    int *len)
+char           *readrec(FILE *fp, int *len)
 {
     int             c,
                     i;
@@ -138,12 +136,10 @@ char           *readrec(
     return buf;
 }
 
-void dump_bytes(
-    char *buf,
-    int len)
+void dump_bytes(char *buf, int len)
 {
-    int             i,
-                    j;
+    int  i;
+    int  j;
 
     for (i = 0; i < len; i += 8) {
         printf("\t%3.3o: ", i);
@@ -164,13 +160,10 @@ void dump_bytes(
     }
 }
 
-void dump_words(
-    unsigned addr,
-    char *buf,
-    int len)
+void dump_words(unsigned addr, char *buf, int len)
 {
-    int             i,
-                    j;
+    int i;
+    int j;
 
     for (i = 0; i < len; i += 8) {
         printf("\t%6.6o: ", addr);
@@ -198,10 +191,7 @@ void dump_words(
     }
 }
 
-void dump_bin(
-    unsigned addr,
-    char *buf,
-    int len)
+void dump_bin(unsigned addr, char *buf, int len)
 {
     int             chksum;     /* Checksum is negative sum of all
                                    bytes including header and length */
@@ -259,10 +249,9 @@ void dump_bin(
     return;                            /* Worked okay. */
 }
 
-void trim(
-    char *buf)
+void trim(char *buf)
 {
-    char           *cp;
+    char *cp;
 
     for (cp = buf + strlen(buf); cp > buf; cp--)
         if (cp[-1] != ' ')
@@ -270,12 +259,11 @@ void trim(
     *cp = 0;
 }
 
-char          **all_gsds = NULL;
-int             nr_gsds = 0;
-int             gsdsize = 0;
+char **all_gsds = NULL;
+int    nr_gsds = 0;
+int    gsdsize = 0;
 
-void add_gsdline(
-    char *line)
+void add_gsdline(char *line)
 {
     if (nr_gsds >= gsdsize || all_gsds == NULL) {
         gsdsize += 128;
@@ -289,12 +277,10 @@ void add_gsdline(
     all_gsds[nr_gsds++] = line;
 }
 
-void got_gsd(
-    char *cp,
-    int len)
+void got_gsd(char *cp, int len)
 {
-    int             i;
-    char           *gsdline;
+    int    i;
+    char  *gsdline;
 
     for (i = 2; i < len; i += 8) {
         char            name[8];
@@ -352,9 +338,7 @@ void got_gsd(
     }
 }
 
-int compare_gsdlines(
-    const void *p1,
-    const void *p2)
+int compare_gsdlines(const void *p1, const void *p2)
 {
     const char     *const *l1 = (const char * const *)p1;
     const char     *const *l2 = (const char * const *)p2;
@@ -362,11 +346,9 @@ int compare_gsdlines(
     return strcmp(*l1, *l2);
 }
 
-void got_endgsd(
-    char *cp,
-    int len)
+void got_endgsd(char *cp, int len)
 {
-    int             i;
+    int   i;
 
     qsort(all_gsds, nr_gsds, sizeof(char *), compare_gsdlines);
 
@@ -382,13 +364,11 @@ void got_endgsd(
     free(all_gsds);
 }
 
-unsigned        last_text_addr = 0;
+unsigned  last_text_addr = 0;
 
-void got_text(
-    char *cp,
-    int len)
+void got_text(char *cp, int len)
 {
-    unsigned        addr = WORD(cp + 2);
+    unsigned  addr = WORD(cp + 2);
 
     last_text_addr = addr;
 
@@ -400,9 +380,7 @@ void got_text(
         dump_bin(last_text_addr, cp + 4, len - 4);
 }
 
-void rad50name(
-    char *cp,
-    char *name)
+void rad50name(char *cp, char *name)
 {
     unrad50(WORD(cp), name);
     unrad50(WORD(cp + 2), name + 3);
@@ -410,9 +388,7 @@ void rad50name(
     trim(name);
 }
 
-void got_rld(
-    char *cp,
-    int len)
+void got_rld(char *cp, int len)
 {
     int             i;
 
@@ -594,41 +570,31 @@ void got_rld(
     }
 }
 
-void got_isd(
-    char *cp,
-    int len)
+void got_isd(char *cp, int len)
 {
     printf("ISD len=%o\n", len);
 }
 
-void got_endmod(
-    char *cp,
-    int len)
+void got_endmod(char *cp, int len)
 {
     printf("ENDMOD\n");
 }
 
-void got_libhdr(
-    char *cp,
-    int len)
+void got_libhdr(char *cp, int len)
 {
     printf("LIBHDR\n");
 }
 
-void got_libend(
-    char *cp,
-    int len)
+void got_libend(char *cp, int len)
 {
     printf("LIBEND\n");
 }
 
-int main(
-    int argc,
-    char *argv[])
+int main(int argc, char *argv[])
 {
-    int             len;
-    FILE           *fp;
-    char           *cp;
+    int    len;
+    FILE  *fp;
+    char  *cp;
 
     fp = fopen(argv[1], "rb");
     if (fp == NULL)
