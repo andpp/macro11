@@ -46,9 +46,7 @@ static char     radtbl[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ$. 0123456789";
 /* rad50 converts from 0 to 3 ASCII (or EBCDIC, if your compiler is so
    inclined) characters into a RAD50 word. */
 
-unsigned rad50(
-    char *cp,
-    char **endp)
+unsigned rad50(char *cp, char **endp)
 {
     unsigned long   acc = 0;
     char           *rp;
@@ -95,9 +93,7 @@ unsigned rad50(
 
 /* rad50x2 - converts from 0 to 6 characters into two words of RAD50. */
 
-void rad50x2(
-    char *cp,
-    unsigned *rp)
+void rad50x2(char *cp, unsigned *rp)
 {
     *rp++ = rad50(cp, &cp);
     *rp = 0;
@@ -107,9 +103,7 @@ void rad50x2(
 
 /* unrad50 - converts a RAD50 word to three characters of ASCII. */
 
-void unrad50(
-    unsigned word,
-    char *cp)
+void unrad50(unsigned word, char *cp)
 {
     if (word < 0175000) {              /* Is it legal RAD50? */
         cp[0] = radtbl[word / 03100];

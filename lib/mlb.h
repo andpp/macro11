@@ -52,14 +52,9 @@ typedef struct mlb {
     int             nentries;
 } MLB;
 
-extern MLB     *mlb_open(
-    char *name);
-extern BUFFER  *mlb_entry(
-    MLB *mlb,
-    char *name);
-extern void     mlb_close(
-    MLB *mlb);
-extern void     mlb_extract(
-    MLB *mlb);
+extern MLB     *mlb_open(char *name);
+extern BUFFER  *mlb_entry(MLB *mlb, char *name);
+extern void     mlb_close(MLB *mlb);
+extern void     mlb_extract(MLB *mlb);
 
 #endif /* MLB_H */

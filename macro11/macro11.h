@@ -1,7 +1,7 @@
 #ifndef MACRO11_H
 #define MACRO11_H
 
-#define VERSIONSTR "0.3 (April 21, 2009)"
+#define VERSIONSTR "0.4 (April 21, 2021)"
 //#define VERSIONSTR "0.2   July 15, 2001"
 
 

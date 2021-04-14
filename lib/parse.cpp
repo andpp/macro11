@@ -453,10 +453,7 @@ EX_TREE        *parse_binary(
 /* get_symbol is used all over the place to pull a symbol out of the
    text.  */
 
-char           *get_symbol(
-    char *cp,
-    char **endp,
-    int *islocal)
+char *get_symbol(char *cp, char **endp, int *islocal)
 {
     int             len;
     char           *symcp;
@@ -533,11 +530,7 @@ char           *get_symbol(
   are you thinking?
 */
 
-int brackrange(
-    char *cp,
-    int *start,
-    int *length,
-    char **endp)
+int brackrange(char *cp, int *start, int *length, char **endp)
 {
     char            endstr[6];
     int             endlen;
@@ -584,8 +577,7 @@ int brackrange(
 
 /* parse_unary parses out a unary operator or leaf expression.  */
 
-EX_TREE        *parse_unary(
-    char *cp)
+EX_TREE *parse_unary(char *cp)
 {
     EX_TREE        *tp;
 
@@ -829,9 +821,7 @@ EX_TREE        *parse_unary(
   an arithmetic expression.
 */
 
-EX_TREE        *parse_expr(
-    char *cp,
-    int undef)
+EX_TREE *parse_expr(char *cp, int undef)
 {
     EX_TREE        *expr;
     EX_TREE        *value;

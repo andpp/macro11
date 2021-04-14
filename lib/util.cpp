@@ -64,14 +64,11 @@ DAMAGE.
     any number base from 2 to 36.
 */
 
-char           *my_ultoa(
-    unsigned long val,
-    char *buf,
-    unsigned int base)
+char *my_ultoa(unsigned long val, char *buf, unsigned int base)
 {
-    static char     digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    char           *strt = buf,
-            *end;
+    static char digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    char        *strt = buf;
+    char        *end;
 
     do {
         *buf++ = digits[val % base];
@@ -97,10 +94,7 @@ char           *my_ultoa(
 /* Ditto my_ultoa.  This actually emits
     a signed representation in other number bases. */
 
-char           *my_ltoa(
-    long val,
-    char *buf,
-    unsigned int base)
+char  *my_ltoa(long val, char *buf, unsigned int base)
 {
     unsigned long   uval;
 
@@ -194,8 +188,7 @@ void *memcheck( void *ptr)
 
 /* upcase turns a string to upper case */
 
-void upcase(
-    char *str)
+void upcase(char *str)
 {
     while (*str) {
         *str = toupper(*str);
@@ -206,11 +199,9 @@ void upcase(
 /* padto adds blanks to the end of a string until it's the given
    length. */
 
-void padto(
-    char *str,
-    int to)
+void padto(char *str, int to)
 {
-    int             needspace = to - strlen(str);
+    int  needspace = to - strlen(str);
 
     str += strlen(str);
     while (needspace > 0)

@@ -21,8 +21,7 @@
 
 /* Allocate a new section */
 
-SECTION        *new_section(
-    void)
+SECTION        *new_section(void)
 {
     SECTION        *sect = static_cast<SECTION *>(memcheck(malloc(sizeof(SECTION))));
 
@@ -40,9 +39,7 @@ SECTION        *new_section(
 /* This is called by places that are about to store some code, or
    which want to manually update DOT. */
 
-void change_dot(
-    TEXT_RLD *tr,
-    int size)
+void change_dot(TEXT_RLD *tr, int size)
 {
     if (size > 0) {
         if (last_dot_section != current_pc->section) {
@@ -66,11 +63,7 @@ void change_dot(
 /* store_word stores a word to the object file and lists it to the
    listing file */
 
-int store_word(
-    STREAM *str,
-    TEXT_RLD *tr,
-    int size,
-    unsigned word)
+int store_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "");
@@ -80,79 +73,49 @@ int store_word(
 /* store_word stores a word to the object file and lists it to the
    listing file */
 
-static int store_displaced_word(
-    STREAM *str,
-    TEXT_RLD *tr,
-    int size,
-    unsigned word)
+static int store_displaced_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "'");
     return text_displaced_word(tr, &DOT, size, word);
 }
 
-static int store_global_displaced_offset_word(
-    STREAM *str,
-    TEXT_RLD *tr,
-    int size,
-    unsigned word,
-    char *global)
+static int store_global_displaced_offset_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word, char *global)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "G");
     return text_global_displaced_offset_word(tr, &DOT, size, word, global);
 }
 
-static int store_global_offset_word(
-    STREAM *str,
-    TEXT_RLD *tr,
-    int size,
-    unsigned word,
-    char *global)
+static int store_global_offset_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word, char *global)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "G");
     return text_global_offset_word(tr, &DOT, size, word, global);
 }
 
-static int store_internal_word(
-    STREAM *str,
-    TEXT_RLD *tr,
-    int size,
-    unsigned word)
+static int store_internal_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "");
     return text_internal_word(tr, &DOT, size, word);
 }
 
-static int store_psect_displaced_offset_word(
-    STREAM *str,
-    TEXT_RLD *tr,
-    int size,
-    unsigned word,
-    char *name)
+static int store_psect_displaced_offset_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word, char *name)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "");
     return text_psect_displaced_offset_word(tr, &DOT, size, word, name);
 }
 
-static int store_psect_offset_word(
-    STREAM *str,
-    TEXT_RLD *tr,
-    int size,
-    unsigned word,
-    char *name)
+static int store_psect_offset_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word, char *name)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "");
     return text_psect_offset_word(tr, &DOT, size, word, name);
 }
 
-int store_limits(
-    STREAM *str,
-    TEXT_RLD *tr)
+int store_limits(STREAM *str, TEXT_RLD *tr)
 {
     change_dot(tr, 4);
     list_word(str, DOT, 0, 2, "");
@@ -163,8 +126,7 @@ int store_limits(
 
 /* free_addr_mode frees the storage consumed by an addr_mode */
 
-void free_addr_mode(
-    ADDR_MODE *mode)
+void free_addr_mode(ADDR_MODE *mode)
 {
     if (mode->offset)
         delete (mode->offset);
@@ -173,8 +135,7 @@ void free_addr_mode(
 
 /* Get the register indicated by the expression */
 
-unsigned get_register(
-    EX_TREE *expr)
+unsigned get_register(EX_TREE *expr)
 {
     unsigned        reg;
 
@@ -197,8 +158,7 @@ unsigned get_register(
   to the "implicit globals" symbol table.
 */
 
-void implicit_gbl(
-    EX_TREE *value)
+void implicit_gbl(EX_TREE *value)
 {
     if (pass)
         return;                        /* Only do this in first pass */
@@ -241,8 +201,7 @@ void implicit_gbl(
 /* Done between the first and second passes */
 /* Migrates the symbols from the "implicit" table into the main table. */
 
-void migrate_implicit(
-    void)
+void migrate_implicit(void)
 {
     SYMBOL_ITER     iter;
     SYMBOL         *isym,
@@ -258,10 +217,7 @@ void migrate_implicit(
     }
 }
 
-int express_sym_offset(
-    EX_TREE *value,
-    SYMBOL **sym,
-    unsigned *offset)
+int express_sym_offset(EX_TREE *value, SYMBOL **sym, unsigned *offset)
 {
     implicit_gbl(value);               /* Translate tree's undefined syms
                                           into global syms */
@@ -306,9 +262,7 @@ int express_sym_offset(
   Translate an EX_TREE into a TEXT_COMPLEX suitable for encoding
   into the object file. */
 
-int complex_tree(
-    TEXT_COMPLEX *tx,
-    EX_TREE *tree)
+int complex_tree(TEXT_COMPLEX *tx, EX_TREE *tree)
 {
     switch (tree->type) {
     case EX_LIT:
@@ -395,11 +349,7 @@ int complex_tree(
 
 /* store a word which is represented by a complex expression. */
 
-static void store_complex(
-    STREAM *refstr,
-    TEXT_RLD *tr,
-    int size,
-    EX_TREE *value)
+static void store_complex(STREAM *refstr, TEXT_RLD *tr, int size, EX_TREE *value)
 {
     TEXT_COMPLEX    tx;
 
@@ -421,11 +371,7 @@ static void store_complex(
 /* store_complex_displaced is the same as store_complex but uses the
    "displaced" RLD code */
 
-static void store_complex_displaced(
-    STREAM *refstr,
-    TEXT_RLD *tr,
-    int size,
-    EX_TREE *value)
+static void store_complex_displaced(STREAM *refstr, TEXT_RLD *tr, int size, EX_TREE *value)
 {
     TEXT_COMPLEX    tx;
 
@@ -448,10 +394,7 @@ static void store_complex_displaced(
   mode_extension - writes the extension word required by an addressing
   mode */
 
-void mode_extension(
-    TEXT_RLD *tr,
-    ADDR_MODE *mode,
-    STREAM *str)
+void mode_extension(TEXT_RLD *tr, ADDR_MODE *mode, STREAM *str)
 {
     EX_TREE        *value = mode->offset;
     SYMBOL         *sym;
@@ -511,8 +454,7 @@ void mode_extension(
 /* eval_defined - take an EX_TREE and returns TRUE if the tree
    represents "defined" symbols. */
 
-int eval_defined(
-    EX_TREE *value)
+int eval_defined(EX_TREE *value)
 {
     switch (value->type) {
     case EX_LIT:
@@ -533,8 +475,7 @@ int eval_defined(
 /* eval_undefined - take an EX_TREE and returns TRUE if it represents
    "undefined" symbols. */
 
-int eval_undefined(
-    EX_TREE *value)
+int eval_undefined(EX_TREE *value)
 {
     switch (value->type) {
     case EX_UNDEFINED_SYM:
@@ -553,9 +494,7 @@ int eval_undefined(
 /* push_cond - a new conditional (.IF) block has been activated.  Push
    it's context. */
 
-void push_cond(
-    int ok,
-    STREAM *str)
+void push_cond(int ok, STREAM *str)
 {
     last_cond++;
     assert(last_cond < MAX_CONDS);
@@ -567,8 +506,7 @@ void push_cond(
 /*
   pop_cond - pop stacked conditionals. */
 
-void pop_cond(
-    int to)
+void pop_cond(int to)
 {
     while (last_cond > to) {
         free(conds[last_cond].file);
@@ -579,9 +517,7 @@ void pop_cond(
 
 /* go_section - sets current_pc to a new program section */
 
-void go_section(
-    TEXT_RLD *tr,
-    SECTION *sect)
+void go_section(TEXT_RLD *tr, SECTION *sect)
 {
     if (current_pc->section == sect)
         return;                        /* This is too easy */
@@ -599,11 +535,7 @@ void go_section(
   tree into the object file.  Used by do_word and .ASCII/.ASCIZ.
 */
 
-void store_value(
-    STACK *stack,
-    TEXT_RLD *tr,
-    int size,
-    EX_TREE *value)
+void store_value(STACK *stack, TEXT_RLD *tr, int size, EX_TREE *value)
 {
     SYMBOL         *sym;
     unsigned        offset;
@@ -627,11 +559,7 @@ void store_value(
 
 /* do_word - used by .WORD, .BYTE, and implied .WORD. */
 
-int do_word(
-    STACK *stack,
-    TEXT_RLD *tr,
-    char *cp,
-    int size)
+int do_word(STACK *stack, TEXT_RLD *tr, char *cp, int size)
 {
     if (size == 2 && (DOT & 1)) {
         report(stack->top, ".WORD on odd boundary\n");
@@ -639,7 +567,7 @@ int do_word(
     }
 
     do {
-        EX_TREE        *value = parse_expr(cp, 0);
+        EX_TREE *value = parse_expr(cp, 0);
 
         store_value(stack, tr, size, value);
 
@@ -655,13 +583,9 @@ int do_word(
   check_branch - check branch distance.
 */
 
-int check_branch(
-    STACK *stack,
-    unsigned offset,
-    int min,
-    int max)
+int check_branch(STACK *stack, unsigned offset, int min, int max)
 {
-    int             s_offset;
+    int s_offset;
 
     /* Sign-extend */
     if (offset & 0100000)
@@ -682,8 +606,7 @@ int check_branch(
 
 /* write_globals writes out the GSD prior to the second assembly pass */
 
-void write_globals(
-    FILE *obj)
+void write_globals(FILE *obj)
 {
     GSD             gsd;
     SYMBOL         *sym;

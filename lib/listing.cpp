@@ -35,10 +35,9 @@ FILE           *lstfile = NULL;
 
 /* do_list returns TRUE if listing is enabled. */
 
-static int dolist(
-    void)
+static int dolist(void)
 {
-    int             ok = lstfile != NULL && pass > 0 && list_level > 0;
+    int ok = lstfile != NULL && pass > 0 && list_level > 0;
 
     return ok;
 }
@@ -67,8 +66,7 @@ void list_source(STREAM *str, const char *cp)
 
 /* list_flush produces a buffered list line. */
 
-void list_flush(
-    void)
+void list_flush(void)
 {
     if (dolist()) {
         padto(binline, offsetof(LSTFORMAT, source));
@@ -83,9 +81,7 @@ void list_flush(
 /* list_fit checks to see if a word will fit in the current listing
    line.  If not, it flushes and prepares another line. */
 
-static void list_fit(
-    STREAM *str,
-    unsigned addr)
+static void list_fit(STREAM *str, unsigned addr)
 {
     size_t          col1 = offsetof(LSTFORMAT, source);
     size_t          col2 = offsetof(LSTFORMAT, pc);
@@ -105,9 +101,7 @@ static void list_fit(
 
 /* list_value is used to show a computed value */
 
-void list_value(
-    STREAM *str,
-    unsigned word)
+void list_value(STREAM *str, unsigned word)
 {
     if (dolist()) {
         /* Print the value and go */

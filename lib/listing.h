@@ -22,29 +22,25 @@ typedef struct lstformat {
 
 /* GLOBAL VARIABLES */
 #ifndef  LISTING__C
-extern int      list_md;        /* option to list macro/rept definition = yes */
+extern int  list_md;        /* option to list macro/rept definition = yes */
+extern int  list_me;        /* option to list macro/rept expansion = yes */
+extern int  list_bex;       /* option to show binary */
+extern int  list_level;     /* Listing control level.  .LIST
+                               increments; .NLIST decrements */
 
-extern int      list_me;        /* option to list macro/rept expansion = yes */
-
-extern int      list_bex;       /* option to show binary */
-
-extern int      list_level;     /* Listing control level.  .LIST
-                                   increments; .NLIST decrements */
-
-//extern                               char   *listline;               /* Source lines */
+//extern   char   *listline;               /* Source lines */
 
 extern FILE    *lstfile;
-
 extern int error_count;
 
 #endif
 
 
-void            list_word(STREAM *str, unsigned addr, unsigned value, int size, const char *flags);
-void            list_value(STREAM *str, unsigned word);
-void            list_source(STREAM *str, const char *cp);
-void            list_flush(void);
-void            report(STREAM *str, const char *fmt, ...);
+void   list_word(STREAM *str, unsigned addr, unsigned value, int size, const char *flags);
+void   list_value(STREAM *str, unsigned word);
+void   list_source(STREAM *str, const char *cp);
+void   list_flush(void);
+void   report(STREAM *str, const char *fmt, ...);
 
 
 #endif

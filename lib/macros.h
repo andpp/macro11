@@ -36,7 +36,6 @@ struct MACRO_STREAM : public BUFFER_STREAM{
     virtual ~MACRO_STREAM() override;
 
     char      *gets() override { return BUFFER_STREAM::gets(); };
-    // void     _delete() override;
     void      rewind() override { BUFFER_STREAM::rewind(); };
 
 } ;
@@ -46,18 +45,11 @@ struct MACRO_STREAM : public BUFFER_STREAM{
 // extern STREAM_VTBL macro_stream_vtbl;
 #endif
 
-// MACRO   *new_macro(char *label);
-// void     free_macro(MACRO *mac);
-
-MACRO   *defmacro(char *cp, STACK *stack, int called);
-
-STREAM  *expandmacro(STREAM *refstr, MACRO *mac, char *cp);
-
-// ARG  *new_arg(void);
-
-void  read_body(STACK *stack, BUFFER *gb, char *name, int called);
-void  eval_arg(STREAM *refstr, ARG *arg);
-BUFFER   *subst_args(BUFFER *text, ARG *args);
+MACRO  *defmacro(char *cp, STACK *stack, int called);
+STREAM *expandmacro(STREAM *refstr, MACRO *mac, char *cp);
+void     read_body(STACK *stack, BUFFER *gb, char *name, int called);
+void     eval_arg(STREAM *refstr, ARG *arg);
+BUFFER  *subst_args(BUFFER *text, ARG *args);
 
 
 

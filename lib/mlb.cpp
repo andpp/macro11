@@ -61,9 +61,7 @@ extern FILE    *lstfile;
 
 /* compare_position is the qsort callback function that compares byte
    locations within the macro library */
-static int compare_position(
-    const void *arg1,
-    const void *arg2)
+static int compare_position(const void *arg1, const void *arg2)
 {
     const char  *c1 = (const char *)arg1;
     const char  *c2 = (const char *)arg2;
@@ -77,8 +75,7 @@ static int compare_position(
 
 
 /* trim removes trailing blanks from a string. */
-static void trim(
-    char *buf)
+static void trim(char *buf)
 {
     char           *cp = buf + strlen(buf);
 
@@ -89,8 +86,7 @@ static void trim(
 /* mlb_open opens a file which is given to be a macro library. */
 /* Returns NULL on failure. */
 
-MLB            *mlb_open(
-    char *name)
+MLB *mlb_open(char *name)
 {
     MLB            *mlb = (MLB *)memcheck(malloc(sizeof(MLB)));
     char           *buff;
@@ -217,11 +213,10 @@ MLB            *mlb_open(
 }
 
 /* mlb_close discards MLB and closes the file. */
-void mlb_close(
-    MLB *mlb)
+void mlb_close(MLB *mlb)
 {
     if (mlb) {
-        int             i;
+        int i;
 
         if (mlb->directory) {
             for (i = 0; i < mlb->nentries; i++)
@@ -239,15 +234,13 @@ void mlb_close(
 /* mlb_entry returns a BUFFER containing the specified entry from the
    macro library, or NULL if not found. */
 
-BUFFER         *mlb_entry(
-    MLB *mlb,
-    char *name)
+BUFFER *mlb_entry(MLB *mlb, char *name)
 {
-    int             i;
-    MLBENT         *ent;
-    BUFFER         *buf;
-    char           *bp;
-    int             c;
+    int       i;
+    MLBENT   *ent;
+    BUFFER   *buf;
+    char     *bp;
+    int       c;
 
     for (i = 0; i < mlb->nentries; i++) {
         ent = &mlb->directory[i];
@@ -289,12 +282,11 @@ BUFFER         *mlb_entry(
    in the file system from thence forward.
 */
 
-void mlb_extract(
-    MLB *mlb)
+void mlb_extract(MLB *mlb)
 {
-    int             i;
-    FILE           *fp;
-    BUFFER         *buf;
+    int      i;
+    FILE    *fp;
+    BUFFER  *buf;
 
     for (i = 0; i < mlb->nentries; i++) {
         char            name[32];

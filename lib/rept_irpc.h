@@ -14,16 +14,8 @@ struct REPT_STREAM;
 struct IRP_STREAM;
 struct IRPC_STREAM;
 
-REPT_STREAM    *expand_rept(
-    STACK *stack,
-    char *cp);
-
-IRP_STREAM     *expand_irp(
-    STACK *stack,
-    char *cp);
-
-IRPC_STREAM    *expand_irpc(
-    STACK *stack,
-    char *cp);
+REPT_STREAM    *expand_rept(STACK *stack, char *cp);
+IRP_STREAM     *expand_irp(STACK *stack, char *cp);
+IRPC_STREAM    *expand_irpc(STACK *stack, char *cp);
 
 #endif

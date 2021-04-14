@@ -34,16 +34,8 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 */
 
-extern unsigned rad50(
-    char *cp,
-    char **endp);
-
-extern void     rad50x2(
-    char *cp,
-    unsigned *rp);
-
-extern void     unrad50(
-    unsigned word,
-    char *cp);
+extern unsigned rad50(char *cp, char **endp);
+extern void     rad50x2(char *cp, unsigned *rp);
+extern void     unrad50(unsigned word, char *cp);
 
 #endif /* RAD50_H */

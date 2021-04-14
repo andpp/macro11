@@ -660,7 +660,7 @@ EX_TREE * EX_TREE::evaluate(int undef)
 
 /* Create an EX_TREE representing a parse error */
 
-EX_TREE        * ex_err(EX_TREE *tp, char *cp)
+EX_TREE * ex_err(EX_TREE *tp, char *cp)
 {
     EX_TREE        *errtp;
 

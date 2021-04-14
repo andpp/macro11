@@ -19,73 +19,32 @@ typedef struct addr_mode {
     EX_TREE        *offset;     /* Expression giving the offset */
 } ADDR_MODE;
 
-void            push_cond(
-    int ok,
-    STREAM *str);
-void            pop_cond(
-    int to);
+void      push_cond(int ok, STREAM *str);
+void      pop_cond(int to);
 
-int             express_sym_offset(
-    EX_TREE *value,
-    SYMBOL **sym,
-    unsigned *offset);
+int       express_sym_offset(EX_TREE *value, SYMBOL **sym, unsigned *offset);
 
-void            change_dot(
-    TEXT_RLD *tr,
-    int size);
+void      change_dot(TEXT_RLD *tr, int size);
 
-int             store_word(
-    STREAM *str,
-    TEXT_RLD *tr,
-    int size,
-    unsigned word);
-int             store_limits(
-    STREAM *str,
-    TEXT_RLD *tr);
-void            store_value(
-    STACK *stack,
-    TEXT_RLD *tr,
-    int size,
-    EX_TREE *value);
+int       store_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word);
+int       store_limits(STREAM *str, TEXT_RLD *tr);
+void      store_value(STACK *stack, TEXT_RLD *tr, int size, EX_TREE *value);
 
-int             do_word(
-    STACK *stack,
-    TEXT_RLD *tr,
-    char *cp,
-    int size);
+int       do_word(STACK *stack, TEXT_RLD *tr, char *cp, int size);
 
-SECTION        *new_section(
-    void);
-void            go_section(
-    TEXT_RLD *tr,
-    SECTION *sect);
+SECTION  *new_section(void);
+void      go_section(TEXT_RLD *tr, SECTION *sect);
 
-void            free_addr_mode(
-    ADDR_MODE *mode);
+void      free_addr_mode(ADDR_MODE *mode);
 
-int             eval_defined(
-    EX_TREE *value);
-int             eval_undefined(
-    EX_TREE *value);
+int       eval_defined(EX_TREE *value);
+int       eval_undefined(EX_TREE *value);
 
+void      mode_extension(TEXT_RLD *tr, ADDR_MODE *mode, STREAM *str);
+int       check_branch(STACK *stack, unsigned offset, int min, int max);
+unsigned  get_register(EX_TREE *expr);
 
-void            mode_extension(
-    TEXT_RLD *tr,
-    ADDR_MODE *mode,
-    STREAM *str);
-int             check_branch(
-    STACK *stack,
-    unsigned offset,
-    int min,
-    int max);
-unsigned        get_register(
-    EX_TREE *expr);
-
-void            write_globals(
-    FILE *obj);
-void            migrate_implicit(
-    void);
-
-
+void      write_globals(FILE *obj);
+void      migrate_implicit(void);
 
 #endif
