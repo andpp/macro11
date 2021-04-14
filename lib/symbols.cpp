@@ -32,8 +32,7 @@ SYMBOL_TABLE    Glb_implicit_st;    /* The symbols which may be implicit globals
 
 /* hash_name hashes a name into a value from 0-HASH_SIZE */
 
-int hash_name(
-    char *label)
+int hash_name(char *label)
 {
     unsigned        accum = 0;
 
@@ -50,8 +49,7 @@ int hash_name(
 /* Diagnostic: symflags returns a char* which gives flags I can use to
    show the context of a symbol. */
 
-char           *symflags(
-    SYMBOL *sym)
+char *symflags( SYMBOL *sym)
 {
     static char     temp[8];
     char           *fp = temp;
@@ -161,7 +159,7 @@ void SYMBOL_TABLE::add_table(SYMBOL *sym)
 /* system_st.add_sym - used throughout to add or update symbols in a symbol
    table.  */
 
-SYMBOL         * SYMBOL_TABLE::add_sym(const char *labelraw, unsigned value, unsigned flags, SECTION *section)
+SYMBOL * SYMBOL_TABLE::add_sym(const char *labelraw, unsigned value, unsigned flags, SECTION *section)
 {
     SYMBOL         *sym;
     char            label[SYMMAX_MAX + 1];      // big size
