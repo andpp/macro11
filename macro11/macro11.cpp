@@ -73,6 +73,10 @@ static void enable_tf(
         list_bex = tf;
     else if (strcmp(opt, "MD") == 0)
         list_md = tf;
+    else if (strcmp(opt, "IS") == 0)
+        enabl_internal_sym = tf;
+    else if (strcmp(opt, "RAD") == 0)
+        disable_rad50_symbols = tf;
 }
 
 //JH:
@@ -135,6 +139,8 @@ static void print_help(
     printf("ME  (on)  - list macro expansion (no func)\n");
     printf("BEX (on)  - show binary (no func)\n");
     printf("MD  (on)  - list macro/rept definition\n");
+    printf("IS  (on)  - Store internal symbols into .OBJ\n");
+    printf("RAD (off) - Store symbols in RAD50 format\n");
     printf("\n");
 }
 

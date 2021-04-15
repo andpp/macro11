@@ -31,8 +31,9 @@ int             enabl_lsb = 0;  /* When set, stops non-local symbol
 
 int             enabl_gbl = 1;  /* Implicit definition of global symbols */
 
-int             disable_rad50_symbols = 1; /* Write full symbol name to OBJ instead of RAD50 encoding */
+int             disable_rad50_symbols = 1; /* Write full symbol name into .OBJ instead of RAD50 encoding */
 
+int             enabl_internal_sym = 1;    /* Store internal symbols into .OBJ */
 
 int             suppressed = 0; /* Assembly suppressed by failed conditional */
 

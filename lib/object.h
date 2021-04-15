@@ -130,7 +130,7 @@ void  gsd_init(GSD *gsd, FILE *fp);
 int   gsd_flush(GSD *gsd);
 int   gsd_mod(GSD *gsd, char *modname);
 int   gsd_csect(GSD *gsd, char *sectname, int size);
-int   gsd_intname(GSD *gsd, char *name, unsigned value);
+int   gsd_intname(GSD *gsd, char *name, int flags, unsigned value);
 int   gsd_xfer(GSD *gsd, char *name, unsigned value);
 int   gsd_global(GSD *gsd, char *name, int flags, unsigned value);
 int   gsd_psect(GSD *gsd, char *name, int flags, int size);

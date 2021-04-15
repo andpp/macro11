@@ -43,7 +43,8 @@ extern int      enabl_lsb;      /* When set, stops non-local symbol
 
 extern int      enabl_gbl;      /* Implicit definition of global symbols */
 
-extern int      disable_rad50_symbols;  /* Write full symbol name to OBJ instead of RAD50 encoding */
+extern int      disable_rad50_symbols;  /* Write full symbol name into .OBJ instead of RAD50 encoding */
+extern int      enabl_internal_sym;     /* Store internal symbols into .OBJ */
 
 extern int      suppressed;     /* Assembly suppressed by failed conditional */
 

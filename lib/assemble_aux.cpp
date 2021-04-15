@@ -645,7 +645,10 @@ void write_globals(FILE *obj)
                            | ((sym->section->flags & PSECT_REL) ? GLOBAL_REL : 0) | 0100,
                            /* Looks undefined, but add it in anyway */
                            sym->value);
+            } else if(enabl_internal_sym && (sym->flags & SYMBOLFLAG_PERMANENT) && sym->section == psect) {
+                gsd_intname(&gsd, sym->label, sym->flags, sym->value);
             }
+
             sym = Glb_symbol_st.next_sym(&sym_iter);
         }
     }

@@ -191,9 +191,9 @@ int gsd_csect(GSD * gsd, char *sectname, int size)
 }
 
 /* gsd_intname - Write an internal symbol (ignored by RT-11 linker) */
-int gsd_intname(GSD * gsd, char *name, unsigned value)
+int gsd_intname(GSD * gsd, char *name, int flags,  unsigned value)
 {
-    return gsd_write(gsd, name, 0, GSD_ISN, value);
+    return gsd_write(gsd, name, flags, GSD_ISN, value);
 }
 
 /* gsd_xfer - Write a program transfer address to GSD */
