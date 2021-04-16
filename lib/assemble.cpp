@@ -21,8 +21,7 @@
 #include "rept_irpc.h"
 
 #include "rad50.h"
-
-
+#include "encoding.h"
 
 
 /* assemble - read a line from the input stack, assemble it. */
@@ -1032,11 +1031,25 @@ static int assemble(
                                 store_value(stack, tr, 1, value);
                                 delete (value);
                             } else {
-                                char            quote = *cp++;
+                                if (true) {
+                                    // convert symbols in KOI-8 BK-0010 format
+                                    utf8_stream utf8str(cp, strlen(cp));
+                                    int quote = utf8str.decode_next();
 
-                                while (*cp && *cp != '\n' && *cp != quote)
-                                    store_word(stack->top, tr, 1, *cp++);
-                                cp++;  /* Skip closing quote */
+                                    int sym = utf8str.decode_next();
+
+                                    while (sym > 0 && sym != '\n' && sym != quote) {
+                                        store_word(stack->top, tr, 1, utf82koi(sym));
+                                        sym = utf8str.decode_next();
+                                    }
+                                    cp = utf8str.get_ptr();
+                                 } else {
+                                    char quote = *cp++;
+
+                                    while (*cp && *cp != '\n' && *cp != quote)
+                                        store_word(stack->top, tr, 1, *cp++);
+                                    cp++;  /* Skip closing quote */
+                                }
                             }
 
                             cp = skipwhite(cp);
