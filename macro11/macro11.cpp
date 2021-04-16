@@ -297,7 +297,7 @@ int main(
 
     add_symbols(&blank_section);
 
-    text_init(&tr, NULL, 0);
+    tr.text_init(NULL, 0);
 
     module_name = static_cast<char *>(memcheck(strdup("")));
 
@@ -343,7 +343,7 @@ int main(
 #endif
 
 
-    text_init(&tr, obj, 0);
+    tr.text_init(obj, 0);
 
     stack.stack_init();                /* Superfluous... */
     /* Re-push the files onto the input stream in reverse order */
@@ -371,7 +371,7 @@ int main(
 
     errcount = assemble_stack(&stack, &tr);
 
-    text_flush(&tr);
+    tr.text_flush();
 
     while (last_cond >= 0) {
         report(NULL, "%s:%d: Unterminated conditional\n", conds[last_cond].file, conds[last_cond].line);
@@ -393,7 +393,8 @@ int main(
     if (lstfile && strcmp(lstname, "-") != 0)
         fclose(lstfile);
 
-    Glb_symbol_st.dump();
+//    Dump symbol table
+//    Glb_symbol_st.dump();
 
     return errcount > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

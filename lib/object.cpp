@@ -104,22 +104,22 @@ static int writerec(FILE *fp, char *data, int len)
 
 /* gsd_init - prepare a GSD prior to writing GSD records */
 
-void gsd_init(GSD * gsd, FILE *fp)
+void GSD::gsd_init(FILE *_fp)
 {
-    gsd->fp = fp;
-    gsd->buf[0] = OBJ_GSD;             /* GSD records start with 1,0 */
-    gsd->buf[1] = 0;
-    gsd->offset = 2;                   /* Offset for further additions */
+    fp = _fp;
+    buf[0] = OBJ_GSD;             /* GSD records start with 1,0 */
+    buf[1] = 0;
+    offset = 2;                   /* Offset for further additions */
 }
 
 /* gsd_flush - write buffered GSD records */
 
-int gsd_flush(GSD * gsd)
+int GSD::gsd_flush()
 {
-    if (gsd->offset > 2) {
-        if (!writerec(gsd->fp, gsd->buf, gsd->offset))
+    if (offset > 2) {
+        if (!writerec(fp, buf, offset))
             return 0;
-        gsd_init(gsd, gsd->fp);
+        gsd_init(fp);
     }
     return 1;
 }
@@ -132,21 +132,27 @@ int gsd_flush(GSD * gsd)
 /* 1 byte type */
 /* 2 bytes value */
 
-static int gsd_write(GSD * gsd, char *name, int flags, int type, int value)
+int GSD::gsd_write(char *name, int flags, int type, int value)
 {
     char           *cp;
     unsigned        radtbl[2];
 
-    if (gsd->offset > sizeof(gsd->buf) - 8) {
-        if (!gsd_flush(gsd))
+    int nlen = disable_rad50_symbols ? 1 + strlen(name) : 4;
+
+    if (offset > sizeof(buf) - nlen - 4) {
+        if (!gsd_flush())
             return 0;
     }
 
+    cp = buf + offset;
+
     if(disable_rad50_symbols) {
-        cp = gsd->buf + gsd->offset;
-        int nlen = strlen(name) + 1;
-        memcpy(cp, name, nlen);
-        cp+=nlen;
+        while(*name) {
+            *cp++ = *name++;
+            offset++;
+        }
+        *cp++=0;
+        offset++;
 
         *cp++ = flags;
         *cp++ = type;
@@ -154,12 +160,10 @@ static int gsd_write(GSD * gsd, char *name, int flags, int type, int value)
         *cp++ = value & 0xff;
         *cp = (value >> 8) & 0xff;
 
-        gsd->offset += nlen + 4;
-
+        offset += 4;
     } else {
         rad50x2(name, radtbl);
 
-        cp = gsd->buf + gsd->offset;
         *cp++ = radtbl[0] & 0xff;
         *cp++ = (radtbl[0] >> 8) & 0xff;
         *cp++ = radtbl[1] & 0xff;
@@ -171,7 +175,7 @@ static int gsd_write(GSD * gsd, char *name, int flags, int type, int value)
         *cp++ = value & 0xff;
         *cp = (value >> 8) & 0xff;
 
-        gsd->offset += 8;
+        offset += 8;
     }
 
     return 1;
@@ -179,62 +183,62 @@ static int gsd_write(GSD * gsd, char *name, int flags, int type, int value)
 
 /* gsd_mod - Write module name to GSD */
 
-int gsd_mod(GSD * gsd, char *modname)
+int GSD::gsd_mod(char *modname)
 {
-    return gsd_write(gsd, modname, 0, GSD_MODNAME, 0);
+    return gsd_write(modname, 0, GSD_MODNAME, 0);
 }
 
 /* gsd_csect - Write a control section name & size to the GSD */
-int gsd_csect(GSD * gsd, char *sectname, int size)
+int GSD::gsd_csect(char *sectname, int size)
 {
-    return gsd_write(gsd, sectname, 0, GSD_CSECT, size);
+    return gsd_write(sectname, 0, GSD_CSECT, size);
 }
 
 /* gsd_intname - Write an internal symbol (ignored by RT-11 linker) */
-int gsd_intname(GSD * gsd, char *name, int flags,  unsigned value)
+int GSD::gsd_intname(char *name, int flags,  unsigned value)
 {
-    return gsd_write(gsd, name, flags, GSD_ISN, value);
+    return gsd_write(name, flags, GSD_ISN, value);
 }
 
 /* gsd_xfer - Write a program transfer address to GSD */
-int gsd_xfer(GSD * gsd, char *name, unsigned value)
+int GSD::gsd_xfer(char *name, unsigned value)
 {
-    return gsd_write(gsd, name, 010, GSD_XFER, value);
+    return gsd_write(name, 010, GSD_XFER, value);
 }
 
 /* gsd_global - Write a global definition or reference to GSD */
 /* Caller must be aware of the proper flags. */
-int gsd_global(GSD * gsd, char *name, int flags, unsigned value)
+int GSD::gsd_global(char *name, int flags, unsigned value)
 {
-    return gsd_write(gsd, name, flags, GSD_GLOBAL, value);
+    return gsd_write(name, flags, GSD_GLOBAL, value);
 }
 
 /* Write a program section to the GSD */
 /* Caller must be aware of the proper flags. */
-int gsd_psect(GSD * gsd, char *name, int flags, int size)
+int GSD::gsd_psect(char *name, int flags, int size)
 {
-    return gsd_write(gsd, name, flags, GSD_PSECT, size);
+    return gsd_write(name, flags, GSD_PSECT, size);
 }
 
 /* Write program ident to GSD */
-int gsd_ident(GSD * gsd, char *name)
+int GSD::gsd_ident(char *name)
 {
-    return gsd_write(gsd, name, 0, GSD_IDENT, 0);
+    return gsd_write(name, 0, GSD_IDENT, 0);
 }
 
 /* Write virtual array declaration to GSD */
-int gsd_virt(GSD * gsd, char *name, int size)
+int GSD::gsd_virt(char *name, int size)
 {
-    return gsd_write(gsd, name, 0, GSD_VSECT, size);
+    return gsd_write(name, 0, GSD_VSECT, size);
 }
 
 /* Write ENDGSD record */
 
-int gsd_end(GSD * gsd)
+int GSD::gsd_end()
 {
-    gsd->buf[0] = OBJ_ENDGSD;
-    gsd->buf[1] = 0;
-    return writerec(gsd->fp, gsd->buf, 2);
+    buf[0] = OBJ_ENDGSD;
+    buf[1] = 0;
+    return writerec(fp, buf, 2);
 }
 
 /* TEXT and RLD record handling */
@@ -245,34 +249,34 @@ int gsd_end(GSD * gsd)
 
 /* text_init prepares a TEXT_RLD prior to writing */
 
-void text_init(TEXT_RLD *tr, FILE *fp, unsigned addr)
+void TEXT_RLD::text_init(FILE *_fp, unsigned addr)
 {
-    tr->fp = fp;
+    fp = _fp;
 
-    tr->text[0] = OBJ_TEXT;            /* text records begin with 3, 0 */
-    tr->text[1] = 0;
-    tr->text[2] = addr & 0xff;         /* and are followed by load address */
-    tr->text[3] = (addr >> 8) & 0xff;
-    tr->txt_offset = 4;                /* Here's where recording new text will begin */
+    text[0] = OBJ_TEXT;            /* text records begin with 3, 0 */
+    text[1] = 0;
+    text[2] = addr & 0xff;         /* and are followed by load address */
+    text[3] = (addr >> 8) & 0xff;
+    txt_offset = 4;                /* Here's where recording new text will begin */
 
-    tr->rld[0] = OBJ_RLD;              /* RLD records begin with 4, 0 */
-    tr->rld[1] = 0;
+    rld[0] = OBJ_RLD;              /* RLD records begin with 4, 0 */
+    rld[1] = 0;
 
-    tr->txt_addr = addr;
-    tr->rld_offset = 2;                /* And are followed by RLD entries */
+    txt_addr = addr;
+    rld_offset = 2;                /* And are followed by RLD entries */
 }
 
 /* text_flush - flushes buffer TEXT and RLD records. */
 
-int text_flush(TEXT_RLD *tr)
+int TEXT_RLD::text_flush()
 {
-    if (tr->txt_offset > 4) {
-        if (!writerec(tr->fp, tr->text, tr->txt_offset))
+    if (txt_offset > 4) {
+        if (!writerec(fp, text, txt_offset))
             return 0;
     }
 
-    if (tr->rld_offset > 2) {
-        if (!writerec(tr->fp, tr->rld, tr->rld_offset))
+    if (rld_offset > 2) {
+        if (!writerec(fp, rld, rld_offset))
             return 0;
     }
 
@@ -283,48 +287,48 @@ int text_flush(TEXT_RLD *tr)
    records.  If not enough space exists in either buffer, both are
    flushed. */
 
-static int text_fit(TEXT_RLD *tr, unsigned addr, int txtsize, int rldsize)
+int TEXT_RLD::text_fit(unsigned addr, int txtsize, int rldsize)
 {
-    if (tr->txt_offset + txtsize <= sizeof(tr->text) && tr->rld_offset + rldsize <= sizeof(tr->rld)
-        && (txtsize == 0 || tr->txt_addr + tr->txt_offset - 4 == addr))
+    if (txt_offset + txtsize <= sizeof(text) && rld_offset + rldsize <= sizeof(rld)
+        && (txtsize == 0 || txt_addr + txt_offset - 4 == addr))
         return 1;                      /* All's well. */
 
-    if (!text_flush(tr))
+    if (!text_flush())
         return 0;
-    text_init(tr, tr->fp, addr);
+    text_init(fp, addr);
 
     return 1;
 }
 
 /* rld_word - adds a word to the RLD information. */
 
-static void rld_name(TEXT_RLD *tr, char *name)
+void TEXT_RLD::rld_name(char *name)
 {
     while(*name) {
-        tr->rld[tr->rld_offset++] = *name++;
+        rld[rld_offset++] = *name++;
     }
-    tr->rld[tr->rld_offset++] = 0;
+    rld[rld_offset++] = 0;
 }
 
 
 /* text_word_i - internal text_word.  Used when buffer space is
    already assured. */
 
-static void text_word_i(TEXT_RLD *tr, unsigned w, int size)
+void TEXT_RLD::text_word_i(unsigned w, int size)
 {
-    tr->text[tr->txt_offset++] = w & 0xff;
+    text[txt_offset++] = w & 0xff;
     if (size > 1)
-        tr->text[tr->txt_offset++] = (w >> 8) & 0xff;
+        text[txt_offset++] = (w >> 8) & 0xff;
 }
 
 /* text_word - write constant word to text */
 
-int text_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word)
+int TEXT_RLD::text_word(unsigned *addr, int size, unsigned word)
 {
-    if (!text_fit(tr, *addr, size, 0))
+    if (!text_fit(*addr, size, 0))
         return 0;
 
-    text_word_i(tr, word, size);
+    text_word_i(word, size);
 
     *addr += size;                     /* Update the caller's DOT */
     return 1;                          /* say "ok". */
@@ -332,47 +336,47 @@ int text_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word)
 
 /* rld_word - adds a word to the RLD information. */
 
-static void rld_word(TEXT_RLD *tr, unsigned wd)
+void TEXT_RLD::rld_word(unsigned wd)
 {
-    tr->rld[tr->rld_offset++] = wd & 0xff;
-    tr->rld[tr->rld_offset++] = (wd >> 8) & 0xff;
+    rld[rld_offset++] = wd & 0xff;
+    rld[rld_offset++] = (wd >> 8) & 0xff;
 }
 
 /* rld_byte - adds a byte to rld information. */
 
-static void rld_byte(TEXT_RLD *tr, unsigned byte)
+void TEXT_RLD::rld_byte(unsigned byte)
 {
-    tr->rld[tr->rld_offset++] = byte & 0xff;
+    rld[rld_offset++] = byte & 0xff;
 }
 
 /* rld_code - write the typical RLD first-word code.  Encodes the
    given address as the offset into the prior TEXT record. */
 
-static void rld_code(TEXT_RLD *tr, unsigned code, unsigned addr, int size)
+void TEXT_RLD::rld_code(unsigned code, unsigned addr, int size)
 {
-    unsigned        offset = addr - tr->txt_addr + 4;
+    unsigned offset = addr - txt_addr + 4;
 
-    rld_word(tr, code | offset << 8 | (size == 1 ? 0200 : 0));
+    rld_word(code | offset << 8 | (size == 1 ? 0200 : 0));
 }
 
 /* rld_code_naddr - typical RLD entries refer to a text address.  This
    one is used when the RLD code does not. */
 
-static void rld_code_naddr(TEXT_RLD *tr, unsigned code, int size)
+void TEXT_RLD::rld_code_naddr(unsigned code, int size)
 {
-    rld_word(tr, code | (size == 1 ? 0200 : 0));
+    rld_word(code | (size == 1 ? 0200 : 0));
 }
 
 /* write a word with a psect-relative value */
 
-int text_internal_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word)
+int TEXT_RLD::text_internal_word(unsigned *addr, int size, unsigned word)
 {
-    if (!text_fit(tr, *addr, size, 4))
+    if (!text_fit(*addr, size, 4))
         return 0;
 
-    text_word_i(tr, word, size);
-    rld_code(tr, RLD_INT, *addr, size);
-    rld_word(tr, word);
+    text_word_i(word, size);
+    rld_code(RLD_INT, *addr, size);
+    rld_word(word);
 
     *addr += size;
 
@@ -381,22 +385,22 @@ int text_internal_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word)
 
 /* write a word which is an absolute reference to a global symbol */
 
-int text_global_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *global)
+int TEXT_RLD::text_global_word(unsigned *addr, int size, unsigned word, char *global)
 {
     unsigned        radtbl[2];
 
-    if (!text_fit(tr, *addr, size, 6))
+    if (!text_fit(*addr, size, 6))
         return 0;
 
-    text_word_i(tr, word, size);
-    rld_code(tr, RLD_GLOBAL, *addr, size);
+    text_word_i(word, size);
+    rld_code(RLD_GLOBAL, *addr, size);
 
     if(disable_rad50_symbols) {
-        rld_name(tr, global);
+        rld_name(global);
     } else {
         rad50x2(global, radtbl);
-        rld_word(tr, radtbl[0]);
-        rld_word(tr, radtbl[1]);
+        rld_word(radtbl[0]);
+        rld_word(radtbl[1]);
     }
 
     *addr += size;
@@ -406,14 +410,14 @@ int text_global_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char
 
 /* Write a word which is a PC-relative reference to an absolute address */
 
-int text_displaced_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word)
+int TEXT_RLD::text_displaced_word(unsigned *addr, int size, unsigned word)
 {
-    if (!text_fit(tr, *addr, size, 4))
+    if (!text_fit(*addr, size, 4))
         return 0;
 
-    text_word_i(tr, word, size);
-    rld_code(tr, RLD_INT_DISP, *addr, size);
-    rld_word(tr, word);
+    text_word_i(word, size);
+    rld_code(RLD_INT_DISP, *addr, size);
+    rld_word(word);
 
     *addr += size;
 
@@ -422,22 +426,22 @@ int text_displaced_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word)
 
 /* write a word which is a PC-relative reference to a global symbol */
 
-int text_global_displaced_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *global)
+int TEXT_RLD::text_global_displaced_word(unsigned *addr, int size, unsigned word, char *global)
 {
     unsigned        radtbl[2];
 
-    if (!text_fit(tr, *addr, size, 6))
+    if (!text_fit(*addr, size, 6))
         return 0;
 
-    text_word_i(tr, word, size);
-    rld_code(tr, RLD_GLOBAL_DISP, *addr, size);
+    text_word_i(word, size);
+    rld_code(RLD_GLOBAL_DISP, *addr, size);
 
     if(disable_rad50_symbols) {
-        rld_name(tr, global);
+        rld_name(global);
     } else {
         rad50x2(global, radtbl);
-        rld_word(tr, radtbl[0]);
-        rld_word(tr, radtbl[1]);
+        rld_word(radtbl[0]);
+        rld_word(radtbl[1]);
     }
 
     *addr += size;
@@ -450,28 +454,28 @@ int text_global_displaced_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned 
 
 /* Optimizes to text_global_word when the offset is zero. */
 
-int text_global_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *global)
+int TEXT_RLD::text_global_offset_word(unsigned *addr, int size, unsigned word, char *global)
 {
     unsigned        radtbl[2];
 
     if (word == 0)
-        return text_global_word(tr, addr, size, word, global);
+        return text_global_word(addr, size, word, global);
 
-    if (!text_fit(tr, *addr, size, 8))
+    if (!text_fit(*addr, size, 8))
         return 0;
 
-    text_word_i(tr, word, size);
+    text_word_i(word, size);
 
-    rld_code(tr, RLD_GLOBAL_OFFSET, *addr, size);
+    rld_code(RLD_GLOBAL_OFFSET, *addr, size);
 
     if(disable_rad50_symbols) {
-        rld_name(tr, global);
+        rld_name(global);
     } else {
         rad50x2(global, radtbl);
-        rld_word(tr, radtbl[0]);
-        rld_word(tr, radtbl[1]);
+        rld_word(radtbl[0]);
+        rld_word(radtbl[1]);
     }
-    rld_word(tr, word);
+    rld_word(word);
 
     *addr += size;
 
@@ -483,27 +487,27 @@ int text_global_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned wor
 
 /* Optimizes to text_global_displaced_word when the offset is zero. */
 
-int text_global_displaced_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *global)
+int TEXT_RLD::text_global_displaced_offset_word(unsigned *addr, int size, unsigned word, char *global)
 {
     unsigned        radtbl[2];
 
     if (word == 0)
-        return text_global_displaced_word(tr, addr, size, word, global);
+        return text_global_displaced_word(addr, size, word, global);
 
-    if (!text_fit(tr, *addr, size, 8))
+    if (!text_fit(*addr, size, 8))
         return 0;
 
-    text_word_i(tr, word, size);
-    rld_code(tr, RLD_GLOBAL_OFFSET_DISP, *addr, size);
+    text_word_i(word, size);
+    rld_code(RLD_GLOBAL_OFFSET_DISP, *addr, size);
 
     if(disable_rad50_symbols) {
-        rld_name(tr, global);
+        rld_name(global);
     } else {
         rad50x2(global, radtbl);
-        rld_word(tr, radtbl[0]);
-        rld_word(tr, radtbl[1]);
+        rld_word(radtbl[0]);
+        rld_word(radtbl[1]);
     }
-    rld_word(tr, word);
+    rld_word(word);
 
     *addr += size;
 
@@ -515,31 +519,31 @@ int text_global_displaced_offset_word(TEXT_RLD *tr, unsigned *addr, int size, un
    because TEXT records themselves contain the current text
    address. */
 
-int text_define_location(TEXT_RLD *tr, char *name, unsigned *addr)
+int TEXT_RLD::text_define_location(char *name, unsigned *addr)
 {
     unsigned        radtbl[2];
 
-    if (!text_fit(tr, *addr, 0, 8))    /* No text space used */
+    if (!text_fit(*addr, 0, 8))    /* No text space used */
         return 0;
 
-    rld_code_naddr(tr, RLD_LOCDEF, 2); /* RLD code for "location
+    rld_code_naddr(RLD_LOCDEF, 2); /* RLD code for "location
                                           counter def" with no offset */
 
     /* Set current section name */
     if(disable_rad50_symbols) {
-        rld_name(tr, name);
+        rld_name(name);
     } else {
         rad50x2(name, radtbl);
-        rld_word(tr, radtbl[0]);
-        rld_word(tr, radtbl[1]);
+        rld_word(radtbl[0]);
+        rld_word(radtbl[1]);
     }
 
-    rld_word(tr, *addr);               /* Set current location addr */
+    rld_word(*addr);               /* Set current location addr */
 
-    if (!text_flush(tr))               /* Flush that block out. */
+    if (!text_flush())               /* Flush that block out. */
         return 0;
 
-    text_init(tr, tr->fp, *addr);      /* Set new text address */
+    text_init(fp, *addr);      /* Set new text address */
 
     return 1;
 }
@@ -549,32 +553,32 @@ int text_define_location(TEXT_RLD *tr, char *name, unsigned *addr)
 /* (I wonder - why is this RLD code even here?  TEXT records contain
    thair own start address.) */
 
-int text_modify_location(TEXT_RLD *tr, unsigned *addr)
+int TEXT_RLD::text_modify_location(unsigned *addr)
 {
-    if (!text_fit(tr, *addr, 0, 4))    /* No text space used */
+    if (!text_fit(*addr, 0, 4))    /* No text space used */
         return 0;
 
-    rld_code_naddr(tr, RLD_LOCMOD, 2); /* RLD code for "location
+    rld_code_naddr(RLD_LOCMOD, 2); /* RLD code for "location
                                           counter mod" with no offset */
-    rld_word(tr, *addr);               /* Set current location addr */
+    rld_word(*addr);               /* Set current location addr */
 
-    if (!text_flush(tr))               /* Flush that block out. */
+    if (!text_flush())               /* Flush that block out. */
         return 0;
-    text_init(tr, tr->fp, *addr);      /* Set new text address */
+    text_init(fp, *addr);      /* Set new text address */
 
     return 1;
 }
 
 /* write two words containing program limits (the .LIMIT directive) */
 
-int text_limits(TEXT_RLD *tr, unsigned *addr)
+int TEXT_RLD::text_limits(unsigned *addr)
 {
-    if (!text_fit(tr, *addr, 4, 2))
+    if (!text_fit(*addr, 4, 2))
         return 0;
 
-    text_word_i(tr, 0, 2);
-    text_word_i(tr, 0, 2);
-    rld_code(tr, RLD_LIMITS, *addr, 2);
+    text_word_i(0, 2);
+    text_word_i(0, 2);
+    rld_code(RLD_LIMITS, *addr, 2);
 
     *addr += 4;
 
@@ -583,23 +587,23 @@ int text_limits(TEXT_RLD *tr, unsigned *addr)
 
 /* write a word which is the start address of a different PSECT */
 
-int text_psect_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *name)
+int TEXT_RLD::text_psect_word(unsigned *addr, int size, unsigned word, char *name)
 {
     unsigned        radtbl[2];
 
-    if (!text_fit(tr, *addr, size, 6))
+    if (!text_fit(*addr, size, 6))
         return 0;
 
-    text_word_i(tr, word, size);
+    text_word_i(word, size);
 
-    rld_code(tr, RLD_PSECT, *addr, size);
+    rld_code(RLD_PSECT, *addr, size);
 
     if(disable_rad50_symbols) {
-        rld_name(tr, name);
+        rld_name(name);
     } else {
         rad50x2(name, radtbl);
-        rld_word(tr, radtbl[0]);
-        rld_word(tr, radtbl[1]);
+        rld_word(radtbl[0]);
+        rld_word(radtbl[1]);
     }
 
     *addr += size;
@@ -611,28 +615,28 @@ int text_psect_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char 
 
 /* Optimizes to text_psect_word when offset is zero */
 
-int text_psect_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *name)
+int TEXT_RLD::text_psect_offset_word(unsigned *addr, int size, unsigned word, char *name)
 {
     unsigned        radtbl[2];
 
     if (word == 0)
-        return text_psect_word(tr, addr, size, word, name);
+        return text_psect_word(addr, size, word, name);
 
-    if (!text_fit(tr, *addr, size, 8))
+    if (!text_fit(*addr, size, 8))
         return 0;
 
-    text_word_i(tr, word, size);
+    text_word_i(word, size);
 
-    rld_code(tr, RLD_PSECT_OFFSET, *addr, size);
+    rld_code(RLD_PSECT_OFFSET, *addr, size);
 
     if(disable_rad50_symbols) {
-        rld_name(tr, name);
+        rld_name(name);
     } else {
         rad50x2(name, radtbl);
-        rld_word(tr, radtbl[0]);
-        rld_word(tr, radtbl[1]);
+        rld_word(radtbl[0]);
+        rld_word(radtbl[1]);
     }
-    rld_word(tr, word);
+    rld_word(word);
 
     *addr += size;
 
@@ -641,23 +645,23 @@ int text_psect_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word
 
 /* write a word which is the address of a different PSECT, PC-relative */
 
-int text_psect_displaced_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *name)
+int TEXT_RLD::text_psect_displaced_word(unsigned *addr, int size, unsigned word, char *name)
 {
     unsigned        radtbl[2];
 
-    if (!text_fit(tr, *addr, size, 6))
+    if (!text_fit(*addr, size, 6))
         return 0;
 
-    text_word_i(tr, word, size);
+    text_word_i(word, size);
 
-    rld_code(tr, RLD_PSECT_DISP, *addr, size);
+    rld_code(RLD_PSECT_DISP, *addr, size);
 
     if(disable_rad50_symbols) {
-        rld_name(tr, name);
+        rld_name(name);
     } else {
         rad50x2(name, radtbl);
-        rld_word(tr, radtbl[0]);
-        rld_word(tr, radtbl[1]);
+        rld_word(radtbl[0]);
+        rld_word(radtbl[1]);
     }
 
     *addr += size;
@@ -670,28 +674,28 @@ int text_psect_displaced_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned w
 
 /* Optimizes to text_psect_displaced_word when offset is zero */
 
-int text_psect_displaced_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *name)
+int TEXT_RLD::text_psect_displaced_offset_word(unsigned *addr, int size, unsigned word, char *name)
 {
     unsigned        radtbl[2];
 
     if (word == 0)
-        return text_psect_displaced_word(tr, addr, size, word, name);
+        return text_psect_displaced_word(addr, size, word, name);
 
-    if (!text_fit(tr, *addr, size, 8))
+    if (!text_fit(*addr, size, 8))
         return 0;
 
-    text_word_i(tr, word, size);
+    text_word_i(word, size);
 
-    rld_code(tr, RLD_PSECT_OFFSET_DISP, *addr, size);
+    rld_code(RLD_PSECT_OFFSET_DISP, *addr, size);
 
     if(disable_rad50_symbols) {
-        rld_name(tr, name);
+        rld_name(name);
     } else {
         rad50x2(name, radtbl);
-        rld_word(tr, radtbl[0]);
-        rld_word(tr, radtbl[1]);
+        rld_word(radtbl[0]);
+        rld_word(radtbl[1]);
     }
-    rld_word(tr, word);
+    rld_word(word);
 
     *addr += size;
 
@@ -706,33 +710,32 @@ int text_psect_displaced_offset_word(TEXT_RLD *tr, unsigned *addr, int size, uns
 
 /* complex_begin initializes a TEXT_COMPLEX */
 
-void text_complex_begin(TEXT_COMPLEX *tx)
+void TEXT_COMPLEX::text_complex_begin()
 {
-    tx->len = 0;
+    len = 0;
 }
 
 /* text_complex_fit checks if a complex expression will fit and
    returns a pointer to it's location */
 
-static char    *text_complex_fit(TEXT_COMPLEX *tx, int size)
+char *TEXT_COMPLEX::text_complex_fit(int size)
 {
-    int             len;
+    unsigned   _len;
 
-    if (tx->len + size > sizeof(tx->accum))
+    if (len + size > sizeof(accum))
         return NULL;                   /* Expression has grown too complex. */
 
-    len = tx->len;
+    _len = len;
+    len += size;
 
-    tx->len += size;
-
-    return tx->accum + len;
+    return accum + _len;
 }
 
 /* text_complex_byte stores a single byte. */
 
-static int text_complex_byte(TEXT_COMPLEX *tx, unsigned byte)
+int TEXT_COMPLEX::text_complex_byte(unsigned byte)
 {
-    char           *cp = text_complex_fit(tx, 1);
+    char           *cp = text_complex_fit(1);
 
     if (!cp)
         return 0;
@@ -742,59 +745,59 @@ static int text_complex_byte(TEXT_COMPLEX *tx, unsigned byte)
 
 /* text_complex_add - add top two stack elements */
 
-int text_complex_add(TEXT_COMPLEX *tx)
+int TEXT_COMPLEX::text_complex_add()
 {
-    return text_complex_byte(tx, CPLX_ADD);
+    return text_complex_byte(CPLX_ADD);
 }
 
 /* text_complex_sub - subtract top two stack elements. */
 /* You know, I think these function labels are self-explanatory... */
 
-int text_complex_sub(TEXT_COMPLEX *tx)
+int TEXT_COMPLEX::text_complex_sub()
 {
-    return text_complex_byte(tx, CPLX_SUB);
+    return text_complex_byte(CPLX_SUB);
 }
 
-int text_complex_mul(TEXT_COMPLEX *tx)
+int TEXT_COMPLEX::text_complex_mul()
 {
-    return text_complex_byte(tx, CPLX_MUL);
+    return text_complex_byte(CPLX_MUL);
 }
 
-int text_complex_div(TEXT_COMPLEX *tx)
+int TEXT_COMPLEX::text_complex_div()
 {
-    return text_complex_byte(tx, CPLX_DIV);
+    return text_complex_byte(CPLX_DIV);
 }
 
-int text_complex_and(TEXT_COMPLEX *tx)
+int TEXT_COMPLEX::text_complex_and()
 {
-    return text_complex_byte(tx, CPLX_AND);
+    return text_complex_byte(CPLX_AND);
 }
 
-int text_complex_or(TEXT_COMPLEX *tx)
+int TEXT_COMPLEX::text_complex_or()
 {
-    return text_complex_byte(tx, CPLX_OR);
+    return text_complex_byte(CPLX_OR);
 }
 
-int text_complex_xor(TEXT_COMPLEX *tx)
+int TEXT_COMPLEX::text_complex_xor()
 {
-    return text_complex_byte(tx, CPLX_XOR);
+    return text_complex_byte(CPLX_XOR);
 }
 
-int text_complex_com(TEXT_COMPLEX *tx)
+int TEXT_COMPLEX::text_complex_com()
 {
-    return text_complex_byte(tx, CPLX_COM);
+    return text_complex_byte(CPLX_COM);
 }
 
-int text_complex_neg(TEXT_COMPLEX *tx)
+int TEXT_COMPLEX::text_complex_neg()
 {
-    return text_complex_byte(tx, CPLX_NEG);
+    return text_complex_byte(CPLX_NEG);
 }
 
 /* text_complex_lit pushes a literal value to the stack. */
 
-int text_complex_lit(TEXT_COMPLEX *tx, unsigned word)
+int TEXT_COMPLEX::text_complex_lit(unsigned word)
 {
-    char           *cp = text_complex_fit(tx, 3);
+    char           *cp = text_complex_fit(3);
 
     if (!cp)
         return 0;
@@ -807,11 +810,11 @@ int text_complex_lit(TEXT_COMPLEX *tx, unsigned word)
 /* text_complex_global pushes the value of a global variable to the
    stack */
 
-int text_complex_global(TEXT_COMPLEX *tx, char *name)
+int TEXT_COMPLEX::text_complex_global(char *name)
 {
     unsigned        radtbl[2];
     int size = disable_rad50_symbols ? strlen(name) + 1 + 1 : 5;
-    char           *cp = text_complex_fit(tx, size);
+    char           *cp = text_complex_fit(size);
 
     if (!cp)
         return 0;
@@ -843,9 +846,9 @@ int text_complex_global(TEXT_COMPLEX *tx, char *name)
    absolute section so that's a bad example), the next sector 1,
    etc. */
 
-int text_complex_psect(TEXT_COMPLEX *tx, unsigned sect, unsigned offset)
+int TEXT_COMPLEX::text_complex_psect(unsigned sect, unsigned offset)
 {
-    char           *cp = text_complex_fit(tx, 4);
+    char           *cp = text_complex_fit(4);
 
     if (!cp)
         return 0;
@@ -863,17 +866,17 @@ int text_complex_commit(TEXT_RLD *tr, unsigned *addr, int size, TEXT_COMPLEX *tx
 {
     int             i;
 
-    text_complex_byte(tx, CPLX_STORE);
+    tx->text_complex_byte(CPLX_STORE);
 
-    if (!text_fit(tr, *addr, size, tx->len + 2))
+    if (!tr->text_fit(*addr, size, tx->len + 2))
         return 0;
 
-    rld_code(tr, RLD_COMPLEX, *addr, size);
+    tr->rld_code(RLD_COMPLEX, *addr, size);
 
     for (i = 0; i < tx->len; i++)
-        rld_byte(tr, tx->accum[i]);
+        tr->rld_byte(tx->accum[i]);
 
-    text_word_i(tr, word, size);
+    tr->text_word_i(word, size);
 
     *addr += size;
 
@@ -887,17 +890,17 @@ int text_complex_commit_displaced(TEXT_RLD *tr, unsigned *addr, int size, TEXT_C
 {
     int             i;
 
-    text_complex_byte(tx, CPLX_STORE_DISP);
+    tx->text_complex_byte(CPLX_STORE_DISP);
 
-    if (!text_fit(tr, *addr, size, tx->len + 2))
+    if (!tr->text_fit(*addr, size, tx->len + 2))
         return 0;
 
-    rld_code(tr, RLD_COMPLEX, *addr, size);
+    tr->rld_code(RLD_COMPLEX, *addr, size);
 
     for (i = 0; i < tx->len; i++)
-        rld_byte(tr, tx->accum[i]);
+        tr->rld_byte(tx->accum[i]);
 
-    text_word_i(tr, word, size);
+    tr->text_word_i(word, size);
 
     *addr += size;
 

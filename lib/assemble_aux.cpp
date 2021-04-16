@@ -43,12 +43,12 @@ void change_dot(TEXT_RLD *tr, int size)
 {
     if (size > 0) {
         if (last_dot_section != current_pc->section) {
-            text_define_location(tr, current_pc->section->label, &current_pc->value);
+            tr->text_define_location(current_pc->section->label, &current_pc->value);
             last_dot_section = current_pc->section;
             last_dot_addr = current_pc->value;
         }
         if (last_dot_addr != current_pc->value) {
-            text_modify_location(tr, &current_pc->value);
+            tr->text_modify_location(&current_pc->value);
             last_dot_addr = current_pc->value;
         }
 
@@ -67,7 +67,7 @@ int store_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "");
-    return text_word(tr, &DOT, size, word);
+    return tr->text_word(&DOT, size, word);
 }
 
 /* store_word stores a word to the object file and lists it to the
@@ -77,42 +77,42 @@ static int store_displaced_word(STREAM *str, TEXT_RLD *tr, int size, unsigned wo
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "'");
-    return text_displaced_word(tr, &DOT, size, word);
+    return tr->text_displaced_word(&DOT, size, word);
 }
 
 static int store_global_displaced_offset_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word, char *global)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "G");
-    return text_global_displaced_offset_word(tr, &DOT, size, word, global);
+    return tr->text_global_displaced_offset_word(&DOT, size, word, global);
 }
 
 static int store_global_offset_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word, char *global)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "G");
-    return text_global_offset_word(tr, &DOT, size, word, global);
+    return tr->text_global_offset_word(&DOT, size, word, global);
 }
 
 static int store_internal_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "");
-    return text_internal_word(tr, &DOT, size, word);
+    return tr->text_internal_word(&DOT, size, word);
 }
 
 static int store_psect_displaced_offset_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word, char *name)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "");
-    return text_psect_displaced_offset_word(tr, &DOT, size, word, name);
+    return tr->text_psect_displaced_offset_word(&DOT, size, word, name);
 }
 
 static int store_psect_offset_word(STREAM *str, TEXT_RLD *tr, int size, unsigned word, char *name)
 {
     change_dot(tr, size);
     list_word(str, DOT, word, size, "");
-    return text_psect_offset_word(tr, &DOT, size, word, name);
+    return tr->text_psect_offset_word(&DOT, size, word, name);
 }
 
 int store_limits(STREAM *str, TEXT_RLD *tr)
@@ -120,7 +120,7 @@ int store_limits(STREAM *str, TEXT_RLD *tr)
     change_dot(tr, 4);
     list_word(str, DOT, 0, 2, "");
     list_word(str, DOT + 2, 0, 2, "");
-    return text_limits(tr, &DOT);
+    return tr->text_limits(&DOT);
 }
 
 
@@ -266,7 +266,7 @@ int complex_tree(TEXT_COMPLEX *tx, EX_TREE *tree)
 {
     switch (tree->type) {
     case EX_LIT:
-        text_complex_lit(tx, tree->data.lit);
+        tx->text_complex_lit(tree->data.lit);
         return 1;
 
     case EX_TEMP_SYM:
@@ -275,9 +275,9 @@ int complex_tree(TEXT_COMPLEX *tx, EX_TREE *tree)
             SYMBOL         *sym = tree->data.symbol;
 
             if ((sym->flags & (SYMBOLFLAG_GLOBAL | SYMBOLFLAG_DEFINITION)) == SYMBOLFLAG_GLOBAL) {
-                text_complex_global(tx, sym->label);
+                tx->text_complex_global(sym->label);
             } else {
-                text_complex_psect(tx, sym->section->sector, sym->value);
+                tx->text_complex_psect(sym->section->sector, sym->value);
             }
         }
         return 1;
@@ -285,13 +285,13 @@ int complex_tree(TEXT_COMPLEX *tx, EX_TREE *tree)
     case EX_COM:
         if (!complex_tree(tx, tree->data.child.left))
             return 0;
-        text_complex_com(tx);
+        tx->text_complex_com();
         return 1;
 
     case EX_NEG:
         if (!complex_tree(tx, tree->data.child.left))
             return 0;
-        text_complex_neg(tx);
+        tx->text_complex_neg();
         return 1;
 
     case EX_ADD:
@@ -299,7 +299,7 @@ int complex_tree(TEXT_COMPLEX *tx, EX_TREE *tree)
             return 0;
         if (!complex_tree(tx, tree->data.child.right))
             return 0;
-        text_complex_add(tx);
+        tx->text_complex_add();
         return 1;
 
     case EX_SUB:
@@ -307,7 +307,7 @@ int complex_tree(TEXT_COMPLEX *tx, EX_TREE *tree)
             return 0;
         if (!complex_tree(tx, tree->data.child.right))
             return 0;
-        text_complex_sub(tx);
+        tx->text_complex_sub();
         return 1;
 
     case EX_MUL:
@@ -315,7 +315,7 @@ int complex_tree(TEXT_COMPLEX *tx, EX_TREE *tree)
             return 0;
         if (!complex_tree(tx, tree->data.child.right))
             return 0;
-        text_complex_mul(tx);
+        tx->text_complex_mul();
         return 1;
 
     case EX_DIV:
@@ -323,7 +323,7 @@ int complex_tree(TEXT_COMPLEX *tx, EX_TREE *tree)
             return 0;
         if (!complex_tree(tx, tree->data.child.right))
             return 0;
-        text_complex_div(tx);
+        tx->text_complex_div();
         return 1;
 
     case EX_AND:
@@ -331,7 +331,7 @@ int complex_tree(TEXT_COMPLEX *tx, EX_TREE *tree)
             return 0;
         if (!complex_tree(tx, tree->data.child.right))
             return 0;
-        text_complex_and(tx);
+        tx->text_complex_and();
         return 1;
 
     case EX_OR:
@@ -339,7 +339,7 @@ int complex_tree(TEXT_COMPLEX *tx, EX_TREE *tree)
             return 0;
         if (!complex_tree(tx, tree->data.child.right))
             return 0;
-        text_complex_or(tx);
+        tx->text_complex_or();
         return 1;
 
     default:
@@ -357,7 +357,7 @@ static void store_complex(STREAM *refstr, TEXT_RLD *tr, int size, EX_TREE *value
 
     implicit_gbl(value);               /* Turn undefined symbols into globals */
 
-    text_complex_begin(&tx);           /* Open complex expression */
+    tx.text_complex_begin();           /* Open complex expression */
 
     if (!complex_tree(&tx, value)) {   /* Translate */
         report(refstr, "Invalid expression\n");
@@ -379,7 +379,7 @@ static void store_complex_displaced(STREAM *refstr, TEXT_RLD *tr, int size, EX_T
 
     implicit_gbl(value);               /* Turn undefined symbols into globals */
 
-    text_complex_begin(&tx);
+    tx.text_complex_begin();
 
     if (!complex_tree(&tx, value)) {
         report(refstr, "Invalid expression\n");
@@ -617,12 +617,12 @@ void write_globals(FILE *obj)
     if (obj == NULL)
         return;                        /* Nothing to do if no OBJ file. */
 
-    gsd_init(&gsd, obj);
+    gsd.gsd_init(obj);
 
-    gsd_mod(&gsd, module_name);
+    gsd.gsd_mod(module_name);
 
     if (ident)
-        gsd_ident(&gsd, ident);
+        gsd.gsd_ident(ident);
 
     /* write out each PSECT with it's global stuff */
     /* Sections must be written out in the order that they
@@ -630,23 +630,21 @@ void write_globals(FILE *obj)
     for (isect = 0; isect < sector; isect++) {
         psect = sections[isect];
 
-        gsd_psect(&gsd, psect->label, psect->flags, psect->size);
+        gsd.gsd_psect(psect->label, psect->flags, psect->size);
         psect->sector = isect;         /* Assign it a sector */
         psect->pc = 0;                 /* Reset it's PC for second pass */
 
         sym = Glb_symbol_st.first_sym(&sym_iter);
         while (sym) {
             if ((sym->flags & SYMBOLFLAG_GLOBAL) && sym->section == psect) {
-                gsd_global(&gsd, sym->label,
-                           (sym->
-                            flags & SYMBOLFLAG_DEFINITION ? GLOBAL_DEF : 0) | ((sym->
-                                                                                flags & SYMBOLFLAG_WEAK) ?
-                                                                               GLOBAL_WEAK : 0)
-                           | ((sym->section->flags & PSECT_REL) ? GLOBAL_REL : 0) | 0100,
-                           /* Looks undefined, but add it in anyway */
-                           sym->value);
+                gsd.gsd_global(sym->label,
+                              (sym->flags & SYMBOLFLAG_DEFINITION ? GLOBAL_DEF : 0) |
+                              ((sym->flags & SYMBOLFLAG_WEAK) ? GLOBAL_WEAK : 0)    |
+                              ((sym->section->flags & PSECT_REL) ? GLOBAL_REL : 0)  | 0100,
+                              /* Looks undefined, but add it in anyway */
+                              sym->value);
             } else if(enabl_internal_sym && (sym->flags & SYMBOLFLAG_PERMANENT) && sym->section == psect) {
-                gsd_intname(&gsd, sym->label, sym->flags, sym->value);
+                gsd.gsd_intname(sym->label, sym->flags, sym->value);
             }
 
             sym = Glb_symbol_st.next_sym(&sym_iter);
@@ -655,7 +653,7 @@ void write_globals(FILE *obj)
 
     /* Now write out the transfer address */
     if (xfer_address->type == EX_LIT) {
-        gsd_xfer(&gsd, ". ABS.", xfer_address->data.lit);
+        gsd.gsd_xfer(". ABS.", xfer_address->data.lit);
     } else {
         SYMBOL         *sym;
         unsigned        offset;
@@ -663,11 +661,11 @@ void write_globals(FILE *obj)
         if (!express_sym_offset(xfer_address, &sym, &offset)) {
             report(NULL, "Illegal program transfer address\n");
         } else {
-            gsd_xfer(&gsd, sym->section->label, sym->value + offset);
+            gsd.gsd_xfer(sym->section->label, sym->value + offset);
         }
     }
 
-    gsd_flush(&gsd);
+    gsd.gsd_flush();
 
-    gsd_end(&gsd);
+    gsd.gsd_end();
 }

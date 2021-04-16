@@ -120,70 +120,92 @@ DAMAGE.
 #define CPLX_REL 017                   /* Followed by one byte "sector number" and two bytes offset */
 #define CPLX_CONST 020                 /* Followed by two bytes constant value */
 
-typedef struct gsd {
+struct GSD {
+    GSD(FILE *fp) : offset(0)  { gsd_init(fp); };
+    GSD() : offset(0), fp(nullptr) {};
+    ~GSD() {};
     FILE           *fp;         /* The file assigned for output */
-    char            buf[122];   /* space for 15 GSD entries */
+    char            buf[1024*512];   /* space for 15 GSD entries */
     int             offset;     /* Current buffer for GSD entries */
-} GSD;
 
-void  gsd_init(GSD *gsd, FILE *fp);
-int   gsd_flush(GSD *gsd);
-int   gsd_mod(GSD *gsd, char *modname);
-int   gsd_csect(GSD *gsd, char *sectname, int size);
-int   gsd_intname(GSD *gsd, char *name, int flags, unsigned value);
-int   gsd_xfer(GSD *gsd, char *name, unsigned value);
-int   gsd_global(GSD *gsd, char *name, int flags, unsigned value);
-int   gsd_psect(GSD *gsd, char *name, int flags, int size);
-int   gsd_ident(GSD *gsd, char *name);
-int   gsd_virt(GSD *gsd, char *name, int size);
-int   gsd_end(GSD *gsd);
+    void  gsd_init(FILE *fp);
+    int   gsd_flush();
+    int   gsd_mod(char *modname);
+    int   gsd_csect(char *sectname, int size);
+    int   gsd_intname(char *name, int flags, unsigned value);
+    int   gsd_xfer(char *name, unsigned value);
+    int   gsd_global(char *name, int flags, unsigned value);
+    int   gsd_psect(char *name, int flags, int size);
+    int   gsd_ident(char *name);
+    int   gsd_virt(char *name, int size);
+    int   gsd_end();
+private:
+    int   gsd_write(char *name, int flags, int type, int value);
+};
 
-typedef struct text_rld {
+struct TEXT_RLD {
+    TEXT_RLD(FILE *fp, unsigned addr): txt_offset(0), rld_offset(0)  {text_init(fp, addr); }
+    TEXT_RLD() : fp(nullptr), txt_addr(0), txt_offset(0), rld_offset(0) {};
+    ~TEXT_RLD() {};
     FILE           *fp;         /* The object file, or NULL */
     char            text[128];  /* text buffer */
     unsigned        txt_addr;   /* The base text address */
     int             txt_offset; /* Current text offset */
     char            rld[128];   /* RLD buffer */
     int             rld_offset; /* Current RLD offset */
-} TEXT_RLD;
 
-void  text_init(TEXT_RLD *tr, FILE *fp, unsigned addr);
-int   text_flush(TEXT_RLD *tr);
-int   text_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word);
-int   text_internal_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word);
-int   text_global_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *global);
-int   text_displaced_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word);
-int   text_global_displaced_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *global);
-int   text_global_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *global);
-int   text_global_displaced_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *global);
-int   text_define_location(TEXT_RLD *tr, char *name, unsigned *addr);
-int   text_modify_location(TEXT_RLD *tr, unsigned *addr);
-int   text_limits(TEXT_RLD *tr, unsigned *addr);
-int   text_psect_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *name);
-int   text_psect_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *name);
-int   text_psect_displaced_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *name);
-int   text_psect_displaced_offset_word(TEXT_RLD *tr, unsigned *addr, int size, unsigned word, char *name);
+    void  text_init(FILE *fp, unsigned addr);
+    int   text_flush();
+    int   text_word(unsigned *addr, int size, unsigned word);
+    int   text_internal_word(unsigned *addr, int size, unsigned word);
+    int   text_global_word(unsigned *addr, int size, unsigned word, char *global);
+    int   text_displaced_word(unsigned *addr, int size, unsigned word);
+    int   text_global_displaced_word(unsigned *addr, int size, unsigned word, char *global);
+    int   text_global_offset_word(unsigned *addr, int size, unsigned word, char *global);
+    int   text_global_displaced_offset_word(unsigned *addr, int size, unsigned word, char *global);
+    int   text_define_location(char *name, unsigned *addr);
+    int   text_modify_location(unsigned *addr);
+    int   text_limits(unsigned *addr);
+    int   text_psect_word(unsigned *addr, int size, unsigned word, char *name);
+    int   text_psect_offset_word(unsigned *addr, int size, unsigned word, char *name);
+    int   text_psect_displaced_word(unsigned *addr, int size, unsigned word, char *name);
+    int   text_psect_displaced_offset_word(unsigned *addr, int size, unsigned word, char *name);
+//private:
+    int   text_fit(unsigned addr, int txtsize, int rldsize);
+    void  rld_name(char *name);
+    void  text_word_i(unsigned w, int size);
+    void  rld_word(unsigned wd);
+    void  rld_byte(unsigned byte);
+    void  rld_code(unsigned code, unsigned addr, int size);
+    void  rld_code_naddr(unsigned code, int size);
+};
 
-typedef struct text_complex {
+struct TEXT_COMPLEX {
+    TEXT_COMPLEX(): len(0) {};
     char            accum[126];
     int             len;
-} TEXT_COMPLEX;
 
-void  text_complex_begin(TEXT_COMPLEX *tx);
-int   text_complex_add(TEXT_COMPLEX *tx);
-int   text_complex_sub(TEXT_COMPLEX *tx);
-int   text_complex_mul(TEXT_COMPLEX *tx);
-int   text_complex_div(TEXT_COMPLEX *tx);
-int   text_complex_and(TEXT_COMPLEX *tx);
-int   text_complex_or(TEXT_COMPLEX *tx);
-int   text_complex_xor(TEXT_COMPLEX *tx);
-int   text_complex_com(TEXT_COMPLEX *tx);
-int   text_complex_neg(TEXT_COMPLEX *tx);
-int   text_complex_lit(TEXT_COMPLEX *tx, unsigned word);
-int   text_complex_global(TEXT_COMPLEX *tx, char *name);
-int   text_complex_psect(TEXT_COMPLEX *tx, unsigned sect, unsigned offset);
+    void  text_complex_begin();
+    int   text_complex_add();
+    int   text_complex_sub();
+    int   text_complex_mul();
+    int   text_complex_div();
+    int   text_complex_and();
+    int   text_complex_or();
+    int   text_complex_xor();
+    int   text_complex_com();
+    int   text_complex_neg();
+    int   text_complex_lit(unsigned word);
+    int   text_complex_global(char *name);
+    int   text_complex_psect(unsigned sect, unsigned offset);
+//private:
+    char *text_complex_fit(int size);
+    int   text_complex_byte(unsigned byte);
+};
+
 int   text_complex_commit(TEXT_RLD *tr, unsigned *addr, int size, TEXT_COMPLEX *tx, unsigned word);
 int   text_complex_commit_displaced(TEXT_RLD *tr, unsigned *addr, int size, TEXT_COMPLEX *tx, unsigned word);
+
 
 int   write_endmod(FILE *fp);
 
