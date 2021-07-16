@@ -257,6 +257,10 @@ static int assemble(
         }
 
         /* Try to resolve instruction or pseudo */
+        if(!symbols_to_upper) {
+            /* convert instruction and pseudo to upper case */
+            upcase(label);
+        }
         op = Glb_system_st.lookup_sym(label);
         if (op) {
             cp = ncp;

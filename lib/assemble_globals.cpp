@@ -35,6 +35,8 @@ int             disable_rad50_symbols = 1; /* Write full symbol name into .OBJ i
 
 int             enabl_internal_sym = 1;    /* Store internal symbols into .OBJ */
 
+int             symbols_to_upper = 0;  /* Convert all symbols to upper case */
+
 int             suppressed = 0; /* Assembly suppressed by failed conditional */
 
 

@@ -489,7 +489,9 @@ char *get_symbol(char *cp, char **endp, int *islocal)
 
     memcpy(symcp, cp, len);
     symcp[len] = 0;
-    upcase(symcp);
+    if (symbols_to_upper) { /* Convert all symbols to upper case */
+        upcase(symcp);
+    }
 
     if (islocal) {
         *islocal = 0;
