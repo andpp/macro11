@@ -137,7 +137,7 @@ int GSD::gsd_write(char *name, int flags, int type, int value)
     char           *cp;
     unsigned        radtbl[2];
 
-    int nlen = disable_rad50_symbols ? 1 + strlen(name) : 4;
+    int nlen = disable_rad50_symbols ? 1 + 2 + strlen(name) : 4;
 
     if (offset > sizeof(buf) - nlen - 4) {
         if (!gsd_flush())
@@ -147,6 +147,8 @@ int GSD::gsd_write(char *name, int flags, int type, int value)
     cp = buf + offset;
 
     if(disable_rad50_symbols) {
+        *cp++ = 0xff; *cp++ = 0xff;
+        offset +=2;
         while(*name) {
             *cp++ = *name++;
             offset++;
@@ -304,6 +306,7 @@ int TEXT_RLD::text_fit(unsigned addr, int txtsize, int rldsize)
 
 void TEXT_RLD::rld_name(char *name)
 {
+    rld[rld_offset++] = 0xff; rld[rld_offset++] = 0xff;
     while(*name) {
         rld[rld_offset++] = *name++;
     }
@@ -813,7 +816,7 @@ int TEXT_COMPLEX::text_complex_lit(unsigned word)
 int TEXT_COMPLEX::text_complex_global(char *name)
 {
     unsigned        radtbl[2];
-    int size = disable_rad50_symbols ? strlen(name) + 1 + 1 : 5;
+    int size = disable_rad50_symbols ? strlen(name) + 2 + 1 + 1 : 5;
     char           *cp = text_complex_fit(size);
 
     if (!cp)
@@ -821,6 +824,7 @@ int TEXT_COMPLEX::text_complex_global(char *name)
 
     if(disable_rad50_symbols) {
         *cp++ = CPLX_GLOBAL;
+        *cp++ = 0xff; *cp++ = 0xff;
         while(*name) {
             *cp++ = *name++;
         }

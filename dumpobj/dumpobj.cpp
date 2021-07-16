@@ -45,6 +45,8 @@ DAMAGE.
 
 #include "util.h"
 
+int rad50name(char *cp, char *name);
+
 #define WORD(cp) ((*(cp) & 0xff) + ((*((cp)+1) & 0xff) << 8))
 
 int             psectid = 0;
@@ -127,11 +129,11 @@ char           *readrec(FILE *fp, int *len)
     c &= 0xff;
     chksum &= 0xff;
 
-    if (c != chksum) {
-        free(buf);
-        fprintf(stderr, "Bad record checksum, " "calculated=%d, recorded=%d\n", chksum, c);
-        return NULL;
-    }
+//    if (c != chksum) {
+//        free(buf);
+//        fprintf(stderr, "Bad record checksum, " "calculated=%d, recorded=%d\n", chksum, c);
+//        return NULL;
+//    }
 
     return buf;
 }
@@ -294,16 +296,18 @@ void got_gsd(char *cp, int len)
             exit(EXIT_FAILURE);
         }
 
-//        unrad50(WORD(cp + i), name);
-//        unrad50(WORD(cp + i + 2), name + 3);
-//        name[6] = 0;
-        char *n = name;
-        do {
-            *n++ = cp[i++];
-        } while (cp[i-1] != 0);
+////        unrad50(WORD(cp + i), name);
+////        unrad50(WORD(cp + i + 2), name + 3);
+////        name[6] = 0;
+//        char *n = name;
+//        do {
+//            *n++ = cp[i++];
+//        } while (cp[i-1] != 0);
 
-        flags = cp[i++];
-        type =  cp[i++];
+        i+=rad50name(cp+i, name);
+
+        flags = cp[i++] & 0xFF;
+        type =  cp[i++] & 0xFF;
         value = WORD(cp + i);
         i+=2;
 
@@ -390,16 +394,24 @@ void got_text(char *cp, int len)
 
 int rad50name(char *cp, char *name)
 {
-//    unrad50(WORD(cp), name);
-//    unrad50(WORD(cp + 2), name + 3);
-//    name[6] = 0;
     int i = 0;
-    while(cp[i]) {
-        name[i] = cp[i];
-        i++;
+    if(WORD(cp) != 0xFFFF) {
+        // Decode RAD50 symbol
+        unrad50(WORD(cp), name);
+        unrad50(WORD(cp + 2), name + 3);
+        name[6] = 0;
+        trim(name);
+        i = 4;
+    } else {
+        // Decode plain text symbol
+        cp+=2;
+        while(*cp) {
+            name[i] = *cp++;
+            i++;
+        }
+        name[i++] = 0;
+        i+=2;
     }
-    name[i++] = 0;
-    trim(name);
     return i;
 
 }
@@ -448,21 +460,21 @@ void got_rld(char *cp, int len)
             i += rad50name(cp + i + 2, name);
             word = WORD(cp + i + 2);
             printf("\tGlobal plus offset%s %o=%s+%o\n", byte, addr, name, word);
-            i += 6;
+            i += 4;
             badbin = 1;
             break;
         case 06:
             i += rad50name(cp + i + 2, name);
             word = WORD(cp + i + 2);
             printf("\tGlobal plus offset displaced%s %o=%s+%o\n", byte, addr, name, word);
-            i += 6;
+            i += 4;
             badbin = 1;
             break;
         case 07:
             i += rad50name(cp + i + 2, name);
             word = WORD(cp + i + 2);
             printf("\tLocation counter definition %s+%o\n", name, word);
-            i += 6;
+            i += 4;
 
             last_text_addr = word;
             break;
@@ -481,12 +493,12 @@ void got_rld(char *cp, int len)
         case 012:
             i += rad50name(cp + i + 2, name);
             printf("\tPSECT%s %o=%s\n", byte, addr, name);
-            i += 4;
+            i += 2;
             badbin = 1;
             break;
         case 014:
             i += rad50name(cp + i + 2, name);
-
+            word = WORD(cp + i + 2);
             printf("\tPSECT displaced%s %o=%s+%o\n", byte, addr, name, word);
             i += 4;
             badbin = 1;
@@ -495,14 +507,14 @@ void got_rld(char *cp, int len)
             i += rad50name(cp + i + 2, name);
             word = WORD(cp + i + 2);
             printf("\tPSECT plus offset%s %o=%s+%o\n", byte, addr, name, word);
-            i += 6;
+            i += 4;
             badbin = 1;
             break;
         case 016:
             i += rad50name(cp + i + 2, name);
             word = WORD(cp + i + 2);
             printf("\tPSECT plus offset displaced%s %o=%s+%o\n", byte, addr, name, word);
-            i += 6;
+            i += 4;
             badbin = 1;
             break;
 
@@ -599,6 +611,18 @@ void got_endmod(char *cp, int len)
 void got_libhdr(char *cp, int len)
 {
     printf("LIBHDR\n");
+//    int eptcount = len / 8;
+    char name[64];
+    unsigned short block;
+    unsigned short offset;
+    for(int i=2; i<len; i++) {
+        i += rad50name(cp + i, name);
+        block = WORD(cp + i + 4);
+        offset = WORD(cp + i + 6);
+        printf("      EPT '%s' block %06o offset %06o\n", name, block, offset);
+        i+=6;
+    }
+
 }
 
 void got_libend(char *cp, int len)
