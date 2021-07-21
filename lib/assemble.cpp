@@ -1291,7 +1291,7 @@ static int assemble(
                                 if (sym->section != current_pc->section) {
                                     report(stack->top, "Bad branch target\n");
                                     delete (value);
-                                    offset = 0;
+                                    return 0;
                                 } else {
                                     /* Calculate byte offset */
                                     offset += DOT + 2;
