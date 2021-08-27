@@ -5,7 +5,3 @@ add_subdirectory(lib)
 add_subdirectory(macro11)
 add_subdirectory(dumpobj)
 add_subdirectory(bin2obj)
-
-add_subdirectory(dumpobj11)
-add_subdirectory(link11)
-
