@@ -319,7 +319,7 @@ void process_pass1_gsd_item_taddr(const gsd_item_t *item, const SaveStatusEntry*
 //                    itemw[0] == itemwtmp[0] && itemw[1] == itemwtmp[1])  // FOUND THE PROPER SECTION
                     item->name == itemtmp.name) // FOUND THE PROPER SECTION
                 {
-                    uint16_t itemvaltmp = itemwtmp[3];
+//                    uint16_t itemvaltmp = itemwtmp[3];
                     uint16_t sectsize = (itemvaltmp + 1) & ~1;  // ROUND SECTION SIZE TO WORD BOUNDARY
                     printf("        Item '%s' type %d - CSECT or PSECT size %06ho\n", unrad50(itemwtmp[0], itemwtmp[1]), itemtypetmp, sectsize);
                     int newvalue = entry->value - sectsize + item->value;
