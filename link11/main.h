@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <string>
+
+using namespace std;
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -38,6 +41,8 @@ void unrad50(uint16_t word, char *cp);
 
 uint16_t rad50(const char *cp, const char **endp);
 uint32_t rad50x2(const char *cp);
+
+int rad50name(const char *cp, char *name);
 
 void fatal_error(const char* message, ...);
 
@@ -166,6 +171,7 @@ const uint16_t SY_SPA = 0100000; // CS$TYP POSITION IN PSECT FLAGS INDICATING SY
 const uint16_t SY_SWI = 010000; // (CS$ACC)SET IF THIS SYMBOL PUT IN SYMBOL TABLE BY /I UNDEF SYMBOL
 const uint16_t SY_SEG = 01777;  // SEGMENT NUMBER BITS IN FLAGS WORD
 
+#define MAX_SYM_LEN 64
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -173,7 +179,7 @@ const uint16_t SY_SEG = 01777;  // SEGMENT NUMBER BITS IN FLAGS WORD
 // **** GSD ENTRY STRUCTURE
 struct GSDentry
 {
-    uint32_t    symbol;     // SYMBOL CHARS 1-6(RAD50)
+    string      symbol;     // SYMBOL CHARS 1-6(RAD50)
     uint8_t     flags;      // FLAGS
     uint8_t     code;       // CODE BYTE
     uint16_t    value;      // SIZE OR OFFSET
@@ -181,7 +187,7 @@ struct GSDentry
 
 struct SaveStatusEntry
 {
-    char     filename[64];
+    char     filename[4096];
     size_t   filesize;
     bool     islibrary;
     uint8_t* data;
@@ -193,12 +199,12 @@ extern int SaveStatusCount;
 // **** SYMBOL TABLE STRUCTURE
 struct SymbolTableEntry
 {
-    uint32_t    name;       // 2 WD RAD50 NAME
+    string      name;       // 2 WD RAD50 NAME
     uint16_t    flagseg;    // PSECT FLAGS !  SEG #
     uint16_t    value;      // VALUE WORD
     uint16_t    status;     // A!B!C!D!  ENTRY # PTR
 
-    const char* unrad50name() const { return unrad50(name); }
+    const char* unrad50name() const { return name.c_str(); }
     uint8_t flags() const { return (flagseg >> 8); }
     uint8_t seg() const { return flagseg & 0xff; }
     uint16_t nextindex() const { return status & 07777; }
@@ -237,7 +243,7 @@ struct tagGlobals
     //uint16_t    ODBLK[15]; // BLOCK TO HOLD BINOUT SPEC
     // LNKOV1->STORE TIME TO ROLL OVER DATE
     //uint16_t    TEMP; // TEMPORARY STORAGE
-    uint8_t     TXTBLK[RECSIZ];  // SPACE FOR A FORMATTED BINARY RECORD
+    uint8_t     TXTBLK[RECSIZ * 128];  // SPACE FOR A FORMATTED BINARY RECORD
 
     int         UNDLST; // START OF UNDEFINED SYMBOL LIST
     uint16_t    SYEN0;  // ADR OF SYMBOL TABLE ENTRY NUMBER 0
@@ -274,7 +280,10 @@ struct tagGlobals
     GSDentry BEGBLK; // TRANSFER ADDRESS BLOCK (4 WD GSD ENTRY)
     //   TRANS ADDR OR REL OFFSET FROM PSECT
 
-    uint16_t    STKBLK[3]; // USER STACK ADDRESS BLOCK(SYMBOL & VALUE)
+    struct    {
+        string symbol;
+        uint16_t value;
+    } STKBLK; // USER STACK ADDRESS BLOCK(SYMBOL & VALUE)
     // LNKSAV->TEMP 4 WORD STORAGE FOR GSD RECORD
 
     uint16_t    HSWVAL; // /H SWITCH VALUE - I-SPACE
@@ -345,9 +354,9 @@ struct tagGlobals
     //uint16_t    DSGBAS; // PASS 2 BASE ADR OF D-SPACE OVERLAY SEGMENT
     //uint16_t    DSGBLK; // PASS 2 BASE BLK OF D-SPACE OVERLAY SEGMENT
 
-    uint32_t    MODNAM; // MODULE NAME, RAD50
+    string    MODNAM; // MODULE NAME, RAD50
     // LDA OUTPUT BUFR PTR OR REL INFO BUFR PTR
-    uint32_t    IDENT;  // PROGRAM IDENTIFICATION
+    string    IDENT;  // PROGRAM IDENTIFICATION
     // "RELADR" ADR OF RELOCATION CODE IN TEXT OF REL FILE
     // +2 "RELOVL" NEXT REL BLK OVERLAY #
 
@@ -412,7 +421,7 @@ extern char savfilename[];
 /////////////////////////////////////////////////////////////////////////////
 
 
-void symbol_table_enter(int* pindex, uint32_t lkname, uint16_t lkwd);
+void symbol_table_enter(int* pindex, const string& lkname, uint16_t lkwd);
 
 void symbol_table_delete(int index);
 
@@ -422,13 +431,13 @@ void symbol_table_remove_undefined(int index);
 
 bool is_any_undefined();
 
-bool symbol_table_dlooke(uint32_t lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex);
+bool symbol_table_dlooke(const string& lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex);
 
-bool symbol_table_lookup(uint32_t lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex);
+bool symbol_table_lookup(const string& lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex);
 
-bool symbol_table_looke(uint32_t lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex);
+bool symbol_table_looke(const string& lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex);
 
-bool symbol_table_search(uint32_t lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex);
+bool symbol_table_search(const string& lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex);
 
 void print_lml_table();
 

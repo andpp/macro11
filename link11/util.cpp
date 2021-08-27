@@ -135,4 +135,27 @@ uint16_t rad50(const char *cp, const char **endp)
     return (uint16_t)acc;  // Done
 }
 
+int rad50name(const char *cp, char *name)
+{
+    int i = 0;
+    if(*(uint16_t *)(cp) != 0xFFFF) {
+        // Decode RAD50 symbol
+        unrad50(*(uint16_t *)(cp), name);
+        unrad50(*(uint16_t *)(cp + 2), name + 3);
+        name[6] = 0;
+//        trim(name);
+        i = 4;
+    } else {
+        // Decode plain text symbol
+        cp+=2;
+        while(*cp) {
+            name[i] = *cp++;
+            i++;
+        }
+        name[i++] = 0;
+        i+=2;
+    }
+    return i;
+}
+
 /////////////////////////////////////////////////////////////////////////////

@@ -189,41 +189,35 @@ int dumpobj_gsd_item(const uint8_t* itemw)
 //    int itemflags = (itemw[2] & 0377);
     uint16_t itemflags = itemw[i++];
     uint16_t itemtype = itemw[i++];
+    uint16_t value = (uint16_t)(itemw[i] + (itemw[i+1] << 8));
+    i+=2;
 
     printf("      GSD '%s' type %d - %s", name, itemtype, (itemtype > 7) ? "UNKNOWN" : GSDItemTypeNames[itemtype]);
     switch (itemtype)
     {
     case 0: // 0 - MODULE NAME FROM .TITLE
         printf("\n");
-        i+=2;
         break;
     case 2: // 2 - ISD ENTRY
         printf("\n");
-        i+=2;
         break;
     case 3: // 3 - TRANSFER ADDRESS
-        printf(" %06ho\n", (uint16_t)(itemw[i] + (itemw[i+1] << 8)));
-        i+=2;
+        printf(" %06ho\n", value);
         break;
     case 4: // 4 - GLOBAL SYMBOL
-        printf(" flags %03o addr %06ho\n", itemflags, (uint16_t)(itemw[i] + (itemw[i+1] << 8)));
-        i+=2;
+        printf(" flags %03o addr %06ho\n", itemflags, value);
         break;
     case 1: // 1 - CSECT NAME
-        printf(" %06ho\n", (uint16_t)(itemw[i] + (itemw[i+1] << 8)));
-        i+=2;
+        printf(" %06ho\n", value);
         break;
     case 5: // 5 - PSECT NAME
-        printf(" flags %03o maxlen %06ho\n", itemflags, (uint16_t)(itemw[i] + (itemw[i+1] << 8)));
-        i+=2;
+        printf(" flags %03o maxlen %06ho\n", itemflags, value);
         break;
     case 6: // 6 - IDENT DEFINITION
         printf(" '%s'\n", name);
-        i+=2;
         break;
     case 7: // 7 - VIRTUAL SECTION
         printf("\n");
-        i+=2;
         break;
     default:
         printf("\n");
@@ -377,7 +371,7 @@ void dumpobj_rld_block(uint8_t* data)
         case 012:  // PSECT
             // RELOCATES A DIRECT POINTER TO A GLOBAL SYMBOL. THE VALUE OF THE GLOBAL SYMBOL IS OBTAINED & STORED.
             l = rad50name((char *)data, name);
-            printf("'%s'\n", name);
+            printf(" '%s'\n", name);
             data += l;  offset += l;
             break;
         case 003:  // INTERNAL DISPLACED
