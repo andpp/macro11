@@ -30,7 +30,7 @@ int ModuleSectionCount = 0;
 /////////////////////////////////////////////////////////////////////////////
 
 
-void symbol_table_enter(int* pindex, const string &lkname, uint16_t lkwd)
+void symbol_table_enter(int* pindex, uint32_t lkname, uint16_t lkwd)
 {
     assert(pindex != nullptr);
     assert(SymbolTable != nullptr);
@@ -44,7 +44,7 @@ void symbol_table_enter(int* pindex, const string &lkname, uint16_t lkwd)
     for (;;)
     {
         entry = SymbolTable + index;
-        if (entry->name.size() == 0)
+        if (entry->name == 0)
             break;
         index++;
         if (index >= SymbolTableSize)
@@ -53,13 +53,12 @@ void symbol_table_enter(int* pindex, const string &lkname, uint16_t lkwd)
 
     //printf("        Saving entry: index %4d name '%s' segment %d\n", index, unrad50(lkname), Globals.SEGNUM);
 
-//    if (lkname.length() == 0) {
-//        lkname = std::to_string((Globals.SEGNUM + 1) << 2);
-//    }
+    if (lkname == 0)
+        lkname = (Globals.SEGNUM + 1) << 2;  // USE SEGMENT # FOR BLANK SECTION NAME
 
     // Save the entry
     SymbolTableCount++;
-    entry->name = (lkname.empty()) ? "  " + std::to_string((Globals.SEGNUM + 1) << 2) : lkname ;
+    entry->name = lkname;
     entry->flagseg = lkwd;
     *pindex = index;
 }
@@ -128,25 +127,6 @@ bool is_any_undefined()
     return (Globals.UNDLST != 0);
 }
 
-uint16_t hash_func(string const& str)
-{
-    // P and M
-    int p = 31;
-    int m = 65521;
-    uint32_t power_of_p = 1;
-    uint32_t hash_val = 0;
-    const char *bstr = str.c_str();
-
-    // Loop to calculate the hash value
-    // by iterating over the elements of string
-    for (int i = 0; i < str.length(); i++) {
-        hash_val = (hash_val + (bstr[i] - 'a' + 1) * power_of_p) % m;
-        power_of_p = (power_of_p * p) % m;
-    }
-    return hash_val;
-}
-
-
 // SYMBOL TABLE SEARCH ROUTINE
 // In:  lkname = symbol name to lookup
 // In:  lnwd   = FLAGS & SEGMENT # MATCH WORD
@@ -154,24 +134,20 @@ uint16_t hash_func(string const& str)
 // In:  dupmsk
 // Out: return = true if found
 // Out: result = index of the found entity, or index of entity to work with
-bool symbol_table_search_routine(const string &_lkname, uint16_t lkwd, uint16_t lkmsk, uint16_t dupmsk, int* result)
+bool symbol_table_search_routine(uint32_t lkname, uint16_t lkwd, uint16_t lkmsk, uint16_t dupmsk, int* result)
 {
     assert(result != nullptr);
     assert(SymbolTable != nullptr);
 
-    string lkname = _lkname;
-
     // Calculate hash
     uint16_t hash = 0;
-    if (lkname.size() != 0)
-//        hash = LOWORD(lkname) + HIWORD(lkname);
-         hash = hash_func(lkname);
-
+    if (lkname != 0)
+        hash = LOWORD(lkname) + HIWORD(lkname);
     else
     {
         // 0 = BLANK NAME
         hash = (Globals.SEGNUM + 1) << 2;  // USE SEGMENT # FOR BLANK SECTION NAME
-        lkname = "  " + std::to_string(hash);
+        lkname = hash;
     }
 
     // Normalize hash to table size
@@ -190,7 +166,7 @@ bool symbol_table_search_routine(const string &_lkname, uint16_t lkwd, uint16_t 
     for (;;)
     {
         SymbolTableEntry* entry = SymbolTable + index;
-        if (entry->name.size() == 0)
+        if (entry->name == 0)
         {
             *result = index;
             break;  // EMPTY CELL
@@ -232,7 +208,7 @@ bool symbol_table_search_routine(const string &_lkname, uint16_t lkwd, uint16_t 
 //     THE SYMBOL TABLE.  DOES NOT REQUIRE A SEGMENT NUMBER MATCH
 //     WHETHER THE SYMBOL IS A DUPLICATE OR NOT.
 // Out: return = true if found, false if new entry
-bool symbol_table_dlooke(const string& lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex)
+bool symbol_table_dlooke(uint32_t lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex)
 {
     assert(pindex != nullptr);
 
@@ -245,7 +221,7 @@ bool symbol_table_dlooke(const string& lkname, uint16_t lkwd, uint16_t lkmsk, in
 }
 // 'LOOKUP' ONLY SEARCHES THE SYMBOL TABLE FOR A SYMBOL MATCH.  IF SYMBOL
 //     IS A DUPLICATE, THIS ROUTINE REQUIRES A SEGMENT NUMBER MATCH.
-bool symbol_table_lookup(const string& lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex)
+bool symbol_table_lookup(uint32_t lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex)
 {
     assert(pindex != nullptr);
 
@@ -255,7 +231,7 @@ bool symbol_table_lookup(const string& lkname, uint16_t lkwd, uint16_t lkmsk, in
 //     THE SYMBOL TABLE.  IF SYMBOL IS A DUPLICATE, THIS ROUTINE
 //     REQUIRES A SEGMENT NUMBER MATCH.
 // Out: return = true if found, false if new entry
-bool symbol_table_looke(const string& lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex)
+bool symbol_table_looke(uint32_t lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex)
 {
     assert(pindex != nullptr);
 
@@ -269,7 +245,7 @@ bool symbol_table_looke(const string& lkname, uint16_t lkwd, uint16_t lkmsk, int
 // 'SEARCH' THIS ROUTINE DOES A LOOKUP ONLY AND DOES NOT CARE WHETHER THE
 //     SYMBOL IS A DUPLICATE OR NOT.  THIS ROUTINE IS USED REPEATEDLY
 //     AFTER A SINGLE CALL TO 'DLOOKE'.
-bool symbol_table_search(string& lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex)
+bool symbol_table_search(uint32_t lkname, uint16_t lkwd, uint16_t lkmsk, int* pindex)
 {
     assert(pindex != nullptr);
 
@@ -294,7 +270,7 @@ void print_symbol_table()
     for (int i = 0; i < SymbolTableSize; i++)
     {
         const SymbolTableEntry* entry = SymbolTable + i;
-        if (entry->name.size() == 0)
+        if (entry->name == 0)
             continue;
         printf("    %06ho '%s' %06ho %06ho %06ho  ", (uint16_t)i, entry->unrad50name(), entry->flagseg, entry->value, entry->status);
         if (entry->flagseg & SY_SEC) printf("SECT ");
@@ -306,8 +282,7 @@ void print_symbol_table()
         printf("\n");
     }
 
-//    printf("  BEGBLK '%s' %06ho\n", unrad50(Globals.BEGBLK.symbol), Globals.BEGBLK.value);
-    printf("  BEGBLK '%s' %06ho\n", Globals.BEGBLK.symbol.c_str(), Globals.BEGBLK.value);
+    printf("  BEGBLK '%s' %06ho\n", unrad50(Globals.BEGBLK.symbol), Globals.BEGBLK.value);
 
     // Enumerate entries starting with ASECT, make sure there's no loops or UNDEF entries
     SymbolTableEntry* preventry = ASECTentry;

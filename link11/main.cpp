@@ -225,8 +225,7 @@ void parse_commandline_option(const char* cur)
         if (param1 & 1)
             fatal_error("Invalid /M option value, use even address\n");
         Globals.SWITCH |= SW_M;
-//        Globals.STKBLK[2] = param1;
-        Globals.STKBLK.value = param1;
+        Globals.STKBLK[2] = param1;
         break;
 
     case 'B':  // /B:addr - SPECIFY BOTTOM ADR FOR LINK
