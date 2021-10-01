@@ -148,10 +148,10 @@ struct TEXT_RLD {
     TEXT_RLD() : fp(nullptr), txt_addr(0), txt_offset(0), rld_offset(0) {};
     ~TEXT_RLD() {};
     FILE           *fp;         /* The object file, or NULL */
-    char            text[128];  /* text buffer */
+    char            text[128*20];  /* text buffer */
     unsigned        txt_addr;   /* The base text address */
     int             txt_offset; /* Current text offset */
-    char            rld[128];   /* RLD buffer */
+    char            rld[128*20];   /* RLD buffer */
     int             rld_offset; /* Current RLD offset */
 
     void  text_init(FILE *fp, unsigned addr);
@@ -182,7 +182,7 @@ struct TEXT_RLD {
 
 struct TEXT_COMPLEX {
     TEXT_COMPLEX(): len(0) {};
-    char            accum[126];
+    char            accum[126*20];
     int             len;
 
     void  text_complex_begin();
