@@ -392,7 +392,9 @@ int TEXT_RLD::text_global_word(unsigned *addr, int size, unsigned word, char *gl
 {
     unsigned        radtbl[2];
 
-    if (!text_fit(*addr, size, 6))
+    int nlen = disable_rad50_symbols ? 1 + 2 + strlen(global) + 4 : 6;
+
+    if (!text_fit(*addr, size, nlen))
         return 0;
 
     text_word_i(word, size);
@@ -433,7 +435,9 @@ int TEXT_RLD::text_global_displaced_word(unsigned *addr, int size, unsigned word
 {
     unsigned        radtbl[2];
 
-    if (!text_fit(*addr, size, 6))
+    int nlen = disable_rad50_symbols ? 1 + 2 + strlen(global) + 4 : 6;
+
+    if (!text_fit(*addr, size, nlen))
         return 0;
 
     text_word_i(word, size);
@@ -464,7 +468,9 @@ int TEXT_RLD::text_global_offset_word(unsigned *addr, int size, unsigned word, c
     if (word == 0)
         return text_global_word(addr, size, word, global);
 
-    if (!text_fit(*addr, size, 8))
+    int nlen = disable_rad50_symbols ? 1 + 2 + strlen(global) + 6 : 8;
+
+    if (!text_fit(*addr, size, nlen))
         return 0;
 
     text_word_i(word, size);
@@ -497,7 +503,9 @@ int TEXT_RLD::text_global_displaced_offset_word(unsigned *addr, int size, unsign
     if (word == 0)
         return text_global_displaced_word(addr, size, word, global);
 
-    if (!text_fit(*addr, size, 8))
+    int nlen = disable_rad50_symbols ? 1 + 2 + strlen(global) + 6 : 8;
+
+    if (!text_fit(*addr, size, nlen))
         return 0;
 
     text_word_i(word, size);
@@ -526,7 +534,9 @@ int TEXT_RLD::text_define_location(char *name, unsigned *addr)
 {
     unsigned        radtbl[2];
 
-    if (!text_fit(*addr, 0, 8))    /* No text space used */
+    int nlen = disable_rad50_symbols ? 1 + 2 + strlen(name) + 4 : 8;
+
+    if (!text_fit(*addr, 0, nlen))    /* No text space used */
         return 0;
 
     rld_code_naddr(RLD_LOCDEF, 2); /* RLD code for "location
@@ -594,7 +604,9 @@ int TEXT_RLD::text_psect_word(unsigned *addr, int size, unsigned word, char *nam
 {
     unsigned        radtbl[2];
 
-    if (!text_fit(*addr, size, 6))
+    int nlen = disable_rad50_symbols ? 1 + 2 + strlen(name) + 2 : 6;
+
+    if (!text_fit(*addr, size, nlen))
         return 0;
 
     text_word_i(word, size);
@@ -625,7 +637,9 @@ int TEXT_RLD::text_psect_offset_word(unsigned *addr, int size, unsigned word, ch
     if (word == 0)
         return text_psect_word(addr, size, word, name);
 
-    if (!text_fit(*addr, size, 8))
+    int nlen = disable_rad50_symbols ? 1 + 2 + strlen(name) + 4 : 8;
+
+    if (!text_fit(*addr, size, nlen))
         return 0;
 
     text_word_i(word, size);
@@ -652,7 +666,9 @@ int TEXT_RLD::text_psect_displaced_word(unsigned *addr, int size, unsigned word,
 {
     unsigned        radtbl[2];
 
-    if (!text_fit(*addr, size, 6))
+    int nlen = disable_rad50_symbols ? 1 + 2 + strlen(name) + 2 : 6;
+
+    if (!text_fit(*addr, size, nlen))
         return 0;
 
     text_word_i(word, size);
@@ -684,7 +700,9 @@ int TEXT_RLD::text_psect_displaced_offset_word(unsigned *addr, int size, unsigne
     if (word == 0)
         return text_psect_displaced_word(addr, size, word, name);
 
-    if (!text_fit(*addr, size, 8))
+    int nlen = disable_rad50_symbols ? 1 + 2 + strlen(name) + 4 : 8;
+
+    if (!text_fit(*addr, size, nlen))
         return 0;
 
     text_word_i(word, size);

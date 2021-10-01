@@ -24,5 +24,6 @@ class utf8_stream {
 };
 
 char utf82koi(int sym);
+char *read_utf8(char *c, int *sym);
 
 #endif // ENCODING_H

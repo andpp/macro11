@@ -11,6 +11,7 @@
 #include "util.h"
 #include "rad50.h"
 #include "assemble_globals.h"
+#include "encoding.h"
 
 
 /* skipwhite - used everywhere to advance a char pointer past spaces */
@@ -716,8 +717,10 @@ EX_TREE *parse_unary(char *cp)
         /* 'x single ASCII character */
         cp++;
         tp = new EX_TREE(EX_LIT);
-        tp->data.lit = *cp & 0xff;
-        tp->cp = ++cp;
+        int sym;
+        cp = read_utf8(cp, &sym);
+        tp->data.lit = utf82koi(sym) & 0xff;
+        tp->cp = cp;
         return tp;
     }
 
@@ -725,8 +728,12 @@ EX_TREE *parse_unary(char *cp)
         /* "xx ASCII character pair */
         cp++;
         tp = new EX_TREE(EX_LIT);
-        tp->data.lit = (cp[0] & 0xff) | ((cp[1] & 0xff) << 8);
-        tp->cp = cp + 2;
+        int sym;
+        int sym1;
+        cp = read_utf8(cp, &sym);
+        cp = read_utf8(cp, &sym);
+        tp->data.lit = (utf82koi(sym) & 0xff) | ((utf82koi(sym1)) << 8);
+        tp->cp = cp;
         return tp;
     }
 

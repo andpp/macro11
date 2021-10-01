@@ -394,7 +394,7 @@ int main(
         fclose(lstfile);
 
 //    Dump symbol table
-    Glb_symbol_st.dump();
+    //Glb_symbol_st.dump();
 
     return errcount > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

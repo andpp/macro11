@@ -1,6 +1,6 @@
 
 #include "encoding.h"
-
+#include<string.h>
 
 /* utf8_decode.c */
 
@@ -268,4 +268,12 @@ char utf82koi(int uchr)
     }
 
     return b;
+}
+
+char *read_utf8(char *cp, int *sym)
+{
+    // convert symbols in KOI-8 BK-0010 format
+    utf8_stream utf8str(cp, strlen(cp));
+    *sym = utf8str.decode_next();
+    return utf8str.get_ptr();
 }

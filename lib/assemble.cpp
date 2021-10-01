@@ -1152,7 +1152,7 @@ static int assemble(
                                 return 0;
                             }
 
-                            if (op->value == 0100 && (mode.type & 07) == 0) {
+                            if (op->value == 0100 && (mode.type & 070) == 0) {
                                 report(stack->top, "JMP Rn is illegal\n");
                                 /* But encode it anyway... */
                             }
