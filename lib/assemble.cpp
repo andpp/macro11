@@ -1030,8 +1030,8 @@ static int assemble(
                             cp = skipwhite(cp);
                             if (*cp == '<' || *cp == '^') {
                                 /* A byte value */
-                                value = parse_expr(cp, 0);
-                                cp = value->cp;
+                                value = parse_expr(cp+1, 0);
+                                cp = value->cp+1;
                                 store_value(stack, tr, 1, value);
                                 delete (value);
                             } else {
